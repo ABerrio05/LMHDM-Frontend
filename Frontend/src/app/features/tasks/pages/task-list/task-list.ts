@@ -5,13 +5,15 @@ import {
   Validators,
 } from '@angular/forms';
 
-import {
-  Task,
-  TaskPriority,
-  TaskStatus,
-} from '../../../../domain/task/task.model';
-
+import { Task } from '../../../../domain/task/task.model';
 import { TaskService } from '../../../../infrastructure/tasks/task.service';
+
+import {
+  Reminder,
+  ReminderRequest,
+} from '../../../../domain/reminder/reminder.model';
+
+import { ReminderService } from '../../../../infrastructure/reminders/reminder.service';
 
 @Component({
   selector: 'app-task-list',
@@ -22,33 +24,136 @@ import { TaskService } from '../../../../infrastructure/tasks/task.service';
 })
 export class TaskListComponent implements OnInit {
   private readonly taskService = inject(TaskService);
+  private readonly reminderService = inject(ReminderService);
   private readonly formBuilder = inject(FormBuilder);
+
+  // ============================================================
+  // TAREAS
+  // ============================================================
 
   tasks: Task[] = [];
 
   loading = false;
   error = '';
 
+  // ============================================================
+  // CREAR TAREA
+  // ============================================================
+
   showCreateForm = false;
   creating = false;
   createError = '';
+
+  readonly taskForm = this.formBuilder.nonNullable.group({
+    title: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(150),
+      ],
+    ],
+
+    description: [''],
+
+    dueDate: [''],
+
+    priority: [
+      'MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA',
+      Validators.required,
+    ],
+  });
+
+  // ============================================================
+  // EDITAR TAREA
+  // ============================================================
 
   editingTaskId: number | null = null;
   updating = false;
   updateError = '';
 
+  readonly editForm = this.formBuilder.nonNullable.group({
+    title: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(150),
+      ],
+    ],
+
+    description: [''],
+
+    dueDate: [''],
+
+    priority: [
+      'MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA',
+      Validators.required,
+    ],
+  });
+
+  // ============================================================
+  // ELIMINAR TAREA
+  // ============================================================
+
   deletingTaskId: number | null = null;
 
-  readonly taskForm = this.formBuilder.nonNullable.group({
-    title: ['', [Validators.required, Validators.maxLength(150)]],
-    description: [''],
-    dueDate: [''],
-    priority: ['MEDIA' as TaskPriority, Validators.required],
+  // ============================================================
+  // RECORDATORIOS
+  // ============================================================
+
+  /**
+   * ID de la tarea cuyos recordatorios están abiertos.
+   */
+  expandedTaskId: number | null = null;
+
+  /**
+   * Recordatorios organizados por ID de tarea.
+   */
+  reminders: Record<number, Reminder[]> = {};
+
+  /**
+   * Indica qué tareas están cargando recordatorios.
+   */
+  remindersLoading: Record<number, boolean> = {};
+
+  /**
+   * Errores al cargar recordatorios.
+   */
+  reminderError: Record<number, string> = {};
+
+  /**
+   * ID de la tarea cuyo formulario de recordatorio está abierto.
+   */
+  reminderFormTaskId: number | null = null;
+
+  creatingReminder = false;
+  reminderCreateError = '';
+
+  readonly reminderForm = this.formBuilder.nonNullable.group({
+    scheduledAt: [
+      '',
+      Validators.required,
+    ],
+
+    message: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(255),
+      ],
+    ],
   });
+
+  // ============================================================
+  // INICIO
+  // ============================================================
 
   ngOnInit(): void {
     this.loadTasks();
   }
+
+  // ============================================================
+  // CARGAR TAREAS
+  // ============================================================
 
   loadTasks(): void {
     this.loading = true;
@@ -56,26 +161,51 @@ export class TaskListComponent implements OnInit {
 
     this.taskService.getTasks().subscribe({
       next: (tasks) => {
-        this.tasks = tasks;
+        console.log(
+          'RESPUESTA DE TASKS:',
+          tasks
+        );
+
+        this.tasks = Array.isArray(tasks)
+          ? tasks
+          : [];
+
         this.loading = false;
       },
+
       error: (error) => {
-        console.error('Error cargando tareas:', error);
-        this.error = 'No se pudieron cargar las tareas.';
+        console.error(
+          'ERROR REAL CARGANDO TASKS:',
+          error
+        );
+
+        console.error(
+          'STATUS:',
+          error?.status
+        );
+
+        console.error(
+          'ERROR:',
+          error?.error
+        );
+
+        this.tasks = [];
+
+        this.error =
+          'No se pudieron cargar las tareas.';
+
         this.loading = false;
       },
     });
   }
 
-  // =========================
+  // ============================================================
   // CREAR TAREA
-  // =========================
+  // ============================================================
 
   openCreateForm(): void {
-    this.editingTaskId = null;
     this.showCreateForm = true;
     this.createError = '';
-    this.updateError = '';
 
     this.taskForm.reset({
       title: '',
@@ -106,146 +236,470 @@ export class TaskListComponent implements OnInit {
     this.creating = true;
     this.createError = '';
 
-    const formValue = this.taskForm.getRawValue();
+    const formValue =
+      this.taskForm.getRawValue();
 
     this.taskService
       .createTask({
         title: formValue.title,
-        description: formValue.description || undefined,
-        dueDate: formValue.dueDate || undefined,
+        description:
+          formValue.description || undefined,
+        dueDate:
+          formValue.dueDate || undefined,
         priority: formValue.priority,
       })
       .subscribe({
         next: (task) => {
-          this.tasks = [...this.tasks, task];
+          console.log(
+            'Tarea creada:',
+            task
+          );
+
+          this.tasks = [
+            ...this.tasks,
+            task,
+          ];
+
           this.creating = false;
+
           this.cancelCreate();
         },
+
         error: (error) => {
-          console.error('Error creando tarea:', error);
-          this.createError = 'No se pudo crear la tarea.';
+          console.error(
+            'Error creando tarea:',
+            error
+          );
+
+          this.createError =
+            'No se pudo crear la tarea.';
+
           this.creating = false;
         },
       });
   }
 
-  // =========================
+  // ============================================================
   // EDITAR TAREA
-  // =========================
+  // ============================================================
 
-  editTask(task: Task): void {
-    this.showCreateForm = true;
+  openEditForm(task: Task): void {
     this.editingTaskId = task.id;
     this.updateError = '';
-    this.createError = '';
 
-    this.taskForm.reset({
+    this.editForm.reset({
       title: task.title,
-      description: task.description ?? '',
-      dueDate: task.dueDate
-        ? this.formatDateForInput(task.dueDate)
-        : '',
+      description:
+        task.description ?? '',
+      dueDate:
+        task.dueDate ?? '',
       priority: task.priority,
     });
   }
 
+  cancelEdit(): void {
+    this.editingTaskId = null;
+    this.updateError = '';
+  }
+
   updateTask(): void {
-    if (this.taskForm.invalid || this.editingTaskId === null) {
-      this.taskForm.markAllAsTouched();
+    if (
+      this.editingTaskId === null ||
+      this.editForm.invalid
+    ) {
+      this.editForm.markAllAsTouched();
       return;
     }
 
     this.updating = true;
     this.updateError = '';
 
-    const formValue = this.taskForm.getRawValue();
+    const taskId =
+      this.editingTaskId;
+
+    const formValue =
+      this.editForm.getRawValue();
 
     this.taskService
-      .updateTask(this.editingTaskId, {
+      .updateTask(taskId, {
         title: formValue.title,
-        description: formValue.description || undefined,
-        dueDate: formValue.dueDate || undefined,
+        description:
+          formValue.description || undefined,
+        dueDate:
+          formValue.dueDate || undefined,
         priority: formValue.priority,
       })
       .subscribe({
         next: (updatedTask) => {
-          this.tasks = this.tasks.map((task) =>
-            task.id === updatedTask.id ? updatedTask : task
+          console.log(
+            'Tarea actualizada:',
+            updatedTask
           );
 
+          this.tasks =
+            this.tasks.map((task) =>
+              task.id === updatedTask.id
+                ? updatedTask
+                : task
+            );
+
           this.updating = false;
-          this.editingTaskId = null;
-          this.cancelCreate();
+
+          this.cancelEdit();
         },
+
         error: (error) => {
-          console.error('Error actualizando tarea:', error);
-          this.updateError = 'No se pudo actualizar la tarea.';
+          console.error(
+            'Error actualizando tarea:',
+            error
+          );
+
+          this.updateError =
+            'No se pudo actualizar la tarea.';
+
           this.updating = false;
         },
       });
   }
 
-  // =========================
-  // CAMBIAR ESTADO
-  // =========================
+  // ============================================================
+  // COMPLETAR TAREA
+  // ============================================================
 
   completeTask(task: Task): void {
-    if (task.status === 'COMPLETADA') {
+    if (
+      task.status === 'COMPLETADA'
+    ) {
       return;
     }
 
     this.taskService
-      .updateTaskStatus(task.id, {
-        status: 'COMPLETADA',
-      })
+      .updateTaskStatus(
+        task.id,
+        {
+          status: 'COMPLETADA',
+        }
+      )
       .subscribe({
         next: (updatedTask) => {
-          this.tasks = this.tasks.map((currentTask) =>
-            currentTask.id === updatedTask.id
-              ? updatedTask
-              : currentTask
+          console.log(
+            'Tarea completada:',
+            updatedTask
           );
+
+          this.tasks =
+            this.tasks.map((currentTask) =>
+              currentTask.id ===
+              updatedTask.id
+                ? updatedTask
+                : currentTask
+            );
         },
+
         error: (error) => {
-          console.error('Error completando tarea:', error);
-          this.error = 'No se pudo completar la tarea.';
+          console.error(
+            'Error completando tarea:',
+            error
+          );
         },
       });
   }
 
-  // =========================
+  // ============================================================
   // ELIMINAR TAREA
-  // =========================
+  // ============================================================
 
   deleteTask(task: Task): void {
-    const confirmed = window.confirm(
-      `¿Seguro que quieres eliminar "${task.title}"?`
-    );
+    const confirmed =
+      window.confirm(
+        `¿Seguro que deseas eliminar la tarea "${task.title}"?`
+      );
 
     if (!confirmed) {
       return;
     }
 
-    this.deletingTaskId = task.id;
-    this.error = '';
+    this.deletingTaskId =
+      task.id;
 
-    this.taskService.deleteTask(task.id).subscribe({
-      next: () => {
-        this.tasks = this.tasks.filter(
-          (currentTask) => currentTask.id !== task.id
-        );
+    this.taskService
+      .deleteTask(task.id)
+      .subscribe({
+        next: () => {
+          console.log(
+            'Tarea eliminada:',
+            task.id
+          );
 
-        this.deletingTaskId = null;
-      },
-      error: (error) => {
-        console.error('Error eliminando tarea:', error);
-        this.error = 'No se pudo eliminar la tarea.';
-        this.deletingTaskId = null;
-      },
+          this.tasks =
+            this.tasks.filter(
+              (currentTask) =>
+                currentTask.id !==
+                task.id
+            );
+
+          delete this.reminders[
+            task.id
+          ];
+
+          this.deletingTaskId =
+            null;
+        },
+
+        error: (error) => {
+          console.error(
+            'Error eliminando tarea:',
+            error
+          );
+
+          this.deletingTaskId =
+            null;
+        },
+      });
+  }
+
+  // ============================================================
+  // MOSTRAR / OCULTAR RECORDATORIOS
+  // ============================================================
+
+  toggleReminders(
+    taskId: number
+  ): void {
+    if (
+      this.expandedTaskId === taskId
+    ) {
+      this.expandedTaskId = null;
+      this.reminderFormTaskId = null;
+      return;
+    }
+
+    this.expandedTaskId = taskId;
+
+    this.loadReminders(taskId);
+  }
+
+  // ============================================================
+  // CARGAR RECORDATORIOS
+  // ============================================================
+
+  loadReminders(
+    taskId: number
+  ): void {
+    this.remindersLoading[
+      taskId
+    ] = true;
+
+    this.reminderError[
+      taskId
+    ] = '';
+
+    this.reminderService
+      .getReminders(taskId)
+      .subscribe({
+        next: (reminders) => {
+          console.log(
+            'RECORDATORIOS DE TAREA',
+            taskId,
+            reminders
+          );
+
+          this.reminders[
+            taskId
+          ] = Array.isArray(reminders)
+            ? reminders
+            : [];
+
+          this.remindersLoading[
+            taskId
+          ] = false;
+        },
+
+        error: (error) => {
+          console.error(
+            'Error cargando recordatorios:',
+            error
+          );
+
+          this.reminders[
+            taskId
+          ] = [];
+
+          this.reminderError[
+            taskId
+          ] =
+            'No se pudieron cargar los recordatorios.';
+
+          this.remindersLoading[
+            taskId
+          ] = false;
+        },
+      });
+  }
+
+  // ============================================================
+  // ABRIR FORMULARIO DE RECORDATORIO
+  // ============================================================
+
+  openReminderForm(
+    taskId: number
+  ): void {
+    this.reminderFormTaskId =
+      taskId;
+
+    this.reminderCreateError = '';
+
+    this.reminderForm.reset({
+      scheduledAt: '',
+      message: '',
     });
   }
 
-  private formatDateForInput(date: string): string {
-    return date.slice(0, 16);
+  // ============================================================
+  // CERRAR FORMULARIO DE RECORDATORIO
+  // ============================================================
+
+  cancelReminderForm(): void {
+    this.reminderFormTaskId =
+      null;
+
+    this.reminderCreateError = '';
+
+    this.reminderForm.reset({
+      scheduledAt: '',
+      message: '',
+    });
+  }
+
+  // ============================================================
+  // CREAR RECORDATORIO
+  // ============================================================
+
+  createReminder(): void {
+    if (
+      this.reminderFormTaskId ===
+        null ||
+      this.reminderForm.invalid
+    ) {
+      this.reminderForm.markAllAsTouched();
+      return;
+    }
+
+    this.creatingReminder = true;
+    this.reminderCreateError = '';
+
+    const taskId =
+      this.reminderFormTaskId;
+
+    const formValue =
+      this.reminderForm.getRawValue();
+
+    const request: ReminderRequest = {
+      scheduledAt:
+        formValue.scheduledAt,
+
+      message:
+        formValue.message,
+    };
+
+    this.reminderService
+      .createReminder(
+        taskId,
+        request
+      )
+      .subscribe({
+        next: (reminder) => {
+          console.log(
+            'Recordatorio creado:',
+            reminder
+          );
+
+          if (
+            !this.reminders[
+              taskId
+            ]
+          ) {
+            this.reminders[
+              taskId
+            ] = [];
+          }
+
+          this.reminders[
+            taskId
+          ] = [
+            ...this.reminders[
+              taskId
+            ],
+            reminder,
+          ];
+
+          this.creatingReminder =
+            false;
+
+          this.cancelReminderForm();
+        },
+
+        error: (error) => {
+          console.error(
+            'Error creando recordatorio:',
+            error
+          );
+
+          this.reminderCreateError =
+            'No se pudo crear el recordatorio.';
+
+          this.creatingReminder =
+            false;
+        },
+      });
+  }
+
+  // ============================================================
+  // ELIMINAR RECORDATORIO
+  // ============================================================
+
+  deleteReminder(
+    reminderId: number,
+    taskId: number
+  ): void {
+    const confirmed =
+      window.confirm(
+        '¿Seguro que deseas eliminar este recordatorio?'
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.reminderService
+      .deleteReminder(
+        reminderId
+      )
+      .subscribe({
+        next: () => {
+          console.log(
+            'Recordatorio eliminado:',
+            reminderId
+          );
+
+          this.reminders[
+            taskId
+          ] = (
+            this.reminders[
+              taskId
+            ] ?? []
+          ).filter(
+            (reminder) =>
+              reminder.id !==
+              reminderId
+          );
+        },
+
+        error: (error) => {
+          console.error(
+            'Error eliminando recordatorio:',
+            error
+          );
+        },
+      });
   }
 }

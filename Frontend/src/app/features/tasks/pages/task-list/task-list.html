@@ -1,306 +1,293 @@
 <section class="tasks-page">
-
   <header class="tasks-header">
     <div>
       <h1>Mis tareas</h1>
       <p>Administra tus tareas pendientes.</p>
     </div>
 
-    <button
-      type="button"
-      (click)="openCreateForm()"
-      [disabled]="showCreateForm"
-    >
+    <button type="button" (click)="openCreateForm()">
       + Nueva tarea
     </button>
   </header>
 
-
-  <!-- FORMULARIO CREAR / EDITAR -->
-
   @if (showCreateForm) {
-
     <form
       class="task-form"
       [formGroup]="taskForm"
-      (ngSubmit)="editingTaskId !== null ? updateTask() : createTask()"
+      (ngSubmit)="createTask()"
     >
+      <h2>Nueva tarea</h2>
 
-      <h2>
-        {{ editingTaskId !== null ? 'Editar tarea' : 'Nueva tarea' }}
-      </h2>
+      <label for="title">Título</label>
 
+      <input
+        id="title"
+        type="text"
+        formControlName="title"
+        placeholder="Ej. Terminar informe"
+      />
 
-      <div class="form-field">
+      @if (
+        taskForm.controls.title.touched &&
+        taskForm.controls.title.invalid
+      ) {
+        <small>El título es obligatorio.</small>
+      }
 
-        <label for="title">
-          Título
-        </label>
+      <label for="description">Descripción</label>
 
-        <input
-          id="title"
-          type="text"
-          formControlName="title"
-          placeholder="Ej. Terminar informe"
-        />
+      <textarea
+        id="description"
+        formControlName="description"
+        placeholder="Descripción de la tarea"
+      ></textarea>
 
-        @if (
-          taskForm.controls.title.touched &&
-          taskForm.controls.title.invalid
-        ) {
-          <small>
-            El título es obligatorio.
-          </small>
-        }
+      <label for="dueDate">Fecha límite</label>
 
-      </div>
+      <input
+        id="dueDate"
+        type="datetime-local"
+        formControlName="dueDate"
+      />
 
+      <label for="priority">Prioridad</label>
 
-      <div class="form-field">
-
-        <label for="description">
-          Descripción
-        </label>
-
-        <textarea
-          id="description"
-          formControlName="description"
-          placeholder="Descripción de la tarea"
-          rows="4"
-        ></textarea>
-
-      </div>
-
-
-      <div class="form-field">
-
-        <label for="dueDate">
-          Fecha límite
-        </label>
-
-        <input
-          id="dueDate"
-          type="datetime-local"
-          formControlName="dueDate"
-        />
-
-      </div>
-
-
-      <div class="form-field">
-
-        <label for="priority">
-          Prioridad
-        </label>
-
-        <select
-          id="priority"
-          formControlName="priority"
-        >
-          <option value="ALTA">
-            Alta
-          </option>
-
-          <option value="MEDIA">
-            Media
-          </option>
-
-          <option value="BAJA">
-            Baja
-          </option>
-        </select>
-
-      </div>
-
+      <select id="priority" formControlName="priority">
+        <option value="ALTA">Alta</option>
+        <option value="MEDIA">Media</option>
+        <option value="BAJA">Baja</option>
+      </select>
 
       @if (createError) {
-        <p class="message error">
-          {{ createError }}
-        </p>
+        <p class="message error">{{ createError }}</p>
       }
-
-
-      @if (updateError) {
-        <p class="message error">
-          {{ updateError }}
-        </p>
-      }
-
 
       <div class="form-actions">
-
-        <button
-          type="submit"
-          [disabled]="creating || updating"
-        >
-          @if (editingTaskId !== null) {
-            {{ updating ? 'Guardando...' : 'Guardar cambios' }}
-          } @else {
-            {{ creating ? 'Creando...' : 'Crear tarea' }}
-          }
+        <button type="submit" [disabled]="creating">
+          {{ creating ? 'Creando...' : 'Crear tarea' }}
         </button>
-
 
         <button
           type="button"
           (click)="cancelCreate()"
-          [disabled]="creating || updating"
+          [disabled]="creating"
         >
           Cancelar
         </button>
-
       </div>
-
     </form>
   }
 
-
-  <!-- CARGANDO -->
-
   @if (loading) {
-
-    <p class="message">
-      Cargando tareas...
-    </p>
-
+    <p class="message">Cargando tareas...</p>
   }
-
-
-  <!-- ERROR -->
 
   @if (error) {
-
-    <p class="message error">
-      {{ error }}
-    </p>
-
+    <p class="message error">{{ error }}</p>
   }
 
-
-  <!-- SIN TAREAS -->
-
-  @if (
-    !loading &&
-    !error &&
-    tasks.length === 0 &&
-    !showCreateForm
-  ) {
-
+  @if (!loading && !error && tasks.length === 0 && !showCreateForm) {
     <div class="empty-state">
-
-      <h2>
-        No tienes tareas todavía
-      </h2>
-
-      <p>
-        Cuando crees una tarea aparecerá aquí.
-      </p>
-
+      <h2>No tienes tareas todavía</h2>
+      <p>Cuando crees una tarea aparecerá aquí.</p>
     </div>
-
   }
-
-
-  <!-- LISTA DE TAREAS -->
 
   @if (!loading && tasks.length > 0) {
-
     <div class="tasks-list">
-
       @for (task of tasks; track task.id) {
-
         <article class="task-card">
 
-          <div class="task-content">
+          <h2>{{ task.title }}</h2>
 
-            <h2>
-              {{ task.title }}
-            </h2>
+          @if (task.description) {
+            <p>{{ task.description }}</p>
+          }
 
-
-            @if (task.description) {
-
-              <p>
-                {{ task.description }}
-              </p>
-
-            }
-
-
-            <div class="task-information">
-
-              <p>
-                <strong>Prioridad:</strong>
-                {{ task.priority }}
-              </p>
-
-              <p>
-                <strong>Estado:</strong>
-                {{ task.status }}
-              </p>
-
-
-              @if (task.dueDate) {
-
-                <p>
-                  <strong>Fecha límite:</strong>
-                  {{ task.dueDate }}
-                </p>
-
-              }
-
-            </div>
-
-          </div>
-
-
-          <!-- BOTONES -->
+          <p>Prioridad: {{ task.priority }}</p>
+          <p>Estado: {{ task.status }}</p>
 
           <div class="task-actions">
 
-            <button
-              type="button"
-              class="edit-button"
-              (click)="editTask(task)"
-            >
-              Editar
-            </button>
-
-
             @if (task.status !== 'COMPLETADA') {
-
-              <button
-                type="button"
-                class="complete-button"
-                (click)="completeTask(task)"
-              >
+              <button type="button">
                 Completar
               </button>
-
             }
-
 
             <button
               type="button"
-              class="delete-button"
-              (click)="deleteTask(task)"
-              [disabled]="deletingTaskId === task.id"
+              (click)="toggleReminders(task.id)"
             >
-              {{
-                deletingTaskId === task.id
-                  ? 'Eliminando...'
-                  : 'Eliminar'
-              }}
+              {{ expandedTaskId === task.id
+                ? 'Ocultar recordatorios'
+                : 'Recordatorios' }}
             </button>
 
           </div>
 
+          @if (expandedTaskId === task.id) {
+
+            <section class="reminders-section">
+
+              <div class="reminders-header">
+                <h3>Recordatorios</h3>
+
+                <button
+                  type="button"
+                  (click)="openReminderForm(task.id)"
+                >
+                  + Agregar recordatorio
+                </button>
+              </div>
+
+              @if (remindersLoading[task.id]) {
+                <p>Cargando recordatorios...</p>
+              }
+
+              @if (reminderError[task.id]) {
+                <p class="message error">
+                  {{ reminderError[task.id] }}
+                </p>
+              }
+
+              @if (
+                !remindersLoading[task.id] &&
+                !reminderError[task.id] &&
+                (reminders[task.id] ?? []).length === 0
+              ) {
+                <p>No hay recordatorios para esta tarea.</p>
+              }
+
+              @if ((reminders[task.id] ?? []).length > 0) {
+
+                <div class="reminders-list">
+
+                  @for (
+                    reminder of reminders[task.id];
+                    track reminder.id
+                  ) {
+
+                    <article class="reminder-card">
+
+                      <p>
+                        <strong>Fecha:</strong>
+                        {{ reminder.scheduledAt }}
+                      </p>
+
+                      <p>
+                        <strong>Mensaje:</strong>
+                        {{ reminder.message }}
+                      </p>
+
+                      <button
+                        type="button"
+                        (click)="
+                          deleteReminder(
+                            reminder.id,
+                            task.id
+                          )
+                        "
+                      >
+                        Eliminar
+                      </button>
+
+                    </article>
+
+                  }
+
+                </div>
+
+              }
+
+              @if (reminderFormTaskId === task.id) {
+
+                <form
+                  class="reminder-form"
+                  [formGroup]="reminderForm"
+                  (ngSubmit)="createReminder()"
+                >
+
+                  <h4>Nuevo recordatorio</h4>
+
+                  <label for="scheduledAt">
+                    Fecha y hora
+                  </label>
+
+                  <input
+                    id="scheduledAt"
+                    type="datetime-local"
+                    formControlName="scheduledAt"
+                  />
+
+                  @if (
+                    reminderForm.controls.scheduledAt.touched &&
+                    reminderForm.controls.scheduledAt.invalid
+                  ) {
+                    <small>
+                      La fecha y hora son obligatorias.
+                    </small>
+                  }
+
+                  <label for="message">
+                    Mensaje
+                  </label>
+
+                  <input
+                    id="message"
+                    type="text"
+                    formControlName="message"
+                    placeholder="Ej. La tarea vence pronto"
+                  />
+
+                  @if (
+                    reminderForm.controls.message.touched &&
+                    reminderForm.controls.message.invalid
+                  ) {
+                    <small>
+                      El mensaje es obligatorio.
+                    </small>
+                  }
+
+                  @if (reminderCreateError) {
+                    <p class="message error">
+                      {{ reminderCreateError }}
+                    </p>
+                  }
+
+                  <div class="form-actions">
+
+                    <button
+                      type="submit"
+                      [disabled]="creatingReminder"
+                    >
+                      {{
+                        creatingReminder
+                          ? 'Guardando...'
+                          : 'Guardar recordatorio'
+                      }}
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="cancelReminderForm()"
+                      [disabled]="creatingReminder"
+                    >
+                      Cancelar
+                    </button>
+
+                  </div>
+
+                </form>
+
+              }
+
+            </section>
+
+          }
+
         </article>
-
       }
-
     </div>
-
   }
-
 </section>
