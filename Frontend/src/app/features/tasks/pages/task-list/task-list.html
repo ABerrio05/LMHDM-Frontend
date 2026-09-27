@@ -1,0 +1,306 @@
+<section class="tasks-page">
+
+  <header class="tasks-header">
+    <div>
+      <h1>Mis tareas</h1>
+      <p>Administra tus tareas pendientes.</p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openCreateForm()"
+      [disabled]="showCreateForm"
+    >
+      + Nueva tarea
+    </button>
+  </header>
+
+
+  <!-- FORMULARIO CREAR / EDITAR -->
+
+  @if (showCreateForm) {
+
+    <form
+      class="task-form"
+      [formGroup]="taskForm"
+      (ngSubmit)="editingTaskId !== null ? updateTask() : createTask()"
+    >
+
+      <h2>
+        {{ editingTaskId !== null ? 'Editar tarea' : 'Nueva tarea' }}
+      </h2>
+
+
+      <div class="form-field">
+
+        <label for="title">
+          Título
+        </label>
+
+        <input
+          id="title"
+          type="text"
+          formControlName="title"
+          placeholder="Ej. Terminar informe"
+        />
+
+        @if (
+          taskForm.controls.title.touched &&
+          taskForm.controls.title.invalid
+        ) {
+          <small>
+            El título es obligatorio.
+          </small>
+        }
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label for="description">
+          Descripción
+        </label>
+
+        <textarea
+          id="description"
+          formControlName="description"
+          placeholder="Descripción de la tarea"
+          rows="4"
+        ></textarea>
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label for="dueDate">
+          Fecha límite
+        </label>
+
+        <input
+          id="dueDate"
+          type="datetime-local"
+          formControlName="dueDate"
+        />
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label for="priority">
+          Prioridad
+        </label>
+
+        <select
+          id="priority"
+          formControlName="priority"
+        >
+          <option value="ALTA">
+            Alta
+          </option>
+
+          <option value="MEDIA">
+            Media
+          </option>
+
+          <option value="BAJA">
+            Baja
+          </option>
+        </select>
+
+      </div>
+
+
+      @if (createError) {
+        <p class="message error">
+          {{ createError }}
+        </p>
+      }
+
+
+      @if (updateError) {
+        <p class="message error">
+          {{ updateError }}
+        </p>
+      }
+
+
+      <div class="form-actions">
+
+        <button
+          type="submit"
+          [disabled]="creating || updating"
+        >
+          @if (editingTaskId !== null) {
+            {{ updating ? 'Guardando...' : 'Guardar cambios' }}
+          } @else {
+            {{ creating ? 'Creando...' : 'Crear tarea' }}
+          }
+        </button>
+
+
+        <button
+          type="button"
+          (click)="cancelCreate()"
+          [disabled]="creating || updating"
+        >
+          Cancelar
+        </button>
+
+      </div>
+
+    </form>
+  }
+
+
+  <!-- CARGANDO -->
+
+  @if (loading) {
+
+    <p class="message">
+      Cargando tareas...
+    </p>
+
+  }
+
+
+  <!-- ERROR -->
+
+  @if (error) {
+
+    <p class="message error">
+      {{ error }}
+    </p>
+
+  }
+
+
+  <!-- SIN TAREAS -->
+
+  @if (
+    !loading &&
+    !error &&
+    tasks.length === 0 &&
+    !showCreateForm
+  ) {
+
+    <div class="empty-state">
+
+      <h2>
+        No tienes tareas todavía
+      </h2>
+
+      <p>
+        Cuando crees una tarea aparecerá aquí.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- LISTA DE TAREAS -->
+
+  @if (!loading && tasks.length > 0) {
+
+    <div class="tasks-list">
+
+      @for (task of tasks; track task.id) {
+
+        <article class="task-card">
+
+          <div class="task-content">
+
+            <h2>
+              {{ task.title }}
+            </h2>
+
+
+            @if (task.description) {
+
+              <p>
+                {{ task.description }}
+              </p>
+
+            }
+
+
+            <div class="task-information">
+
+              <p>
+                <strong>Prioridad:</strong>
+                {{ task.priority }}
+              </p>
+
+              <p>
+                <strong>Estado:</strong>
+                {{ task.status }}
+              </p>
+
+
+              @if (task.dueDate) {
+
+                <p>
+                  <strong>Fecha límite:</strong>
+                  {{ task.dueDate }}
+                </p>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <!-- BOTONES -->
+
+          <div class="task-actions">
+
+            <button
+              type="button"
+              class="edit-button"
+              (click)="editTask(task)"
+            >
+              Editar
+            </button>
+
+
+            @if (task.status !== 'COMPLETADA') {
+
+              <button
+                type="button"
+                class="complete-button"
+                (click)="completeTask(task)"
+              >
+                Completar
+              </button>
+
+            }
+
+
+            <button
+              type="button"
+              class="delete-button"
+              (click)="deleteTask(task)"
+              [disabled]="deletingTaskId === task.id"
+            >
+              {{
+                deletingTaskId === task.id
+                  ? 'Eliminando...'
+                  : 'Eliminar'
+              }}
+            </button>
+
+          </div>
+
+        </article>
+
+      }
+
+    </div>
+
+  }
+
+</section>
