@@ -4,6 +4,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 import { Task } from '../../../../domain/task/task.model';
 import { TaskService } from '../../../../infrastructure/tasks/task.service';
@@ -100,29 +101,14 @@ export class TaskListComponent implements OnInit {
   // RECORDATORIOS
   // ============================================================
 
-  /**
-   * ID de la tarea cuyos recordatorios están abiertos.
-   */
   expandedTaskId: number | null = null;
 
-  /**
-   * Recordatorios organizados por ID de tarea.
-   */
   reminders: Record<number, Reminder[]> = {};
 
-  /**
-   * Indica qué tareas están cargando recordatorios.
-   */
   remindersLoading: Record<number, boolean> = {};
 
-  /**
-   * Errores al cargar recordatorios.
-   */
   reminderError: Record<number, string> = {};
 
-  /**
-   * ID de la tarea cuyo formulario de recordatorio está abierto.
-   */
   reminderFormTaskId: number | null = null;
 
   creatingReminder = false;
@@ -148,6 +134,8 @@ export class TaskListComponent implements OnInit {
   // ============================================================
 
   ngOnInit(): void {
+    console.log('TaskListComponent iniciado');
+
     this.loadTasks();
   }
 
@@ -156,47 +144,73 @@ export class TaskListComponent implements OnInit {
   // ============================================================
 
   loadTasks(): void {
+    console.log('INICIANDO CARGA DE TAREAS');
+
     this.loading = true;
     this.error = '';
 
-    this.taskService.getTasks().subscribe({
-      next: (tasks) => {
-        console.log(
-          'RESPUESTA DE TASKS:',
-          tasks
-        );
+    this.taskService
+      .getTasks()
+      .pipe(
+        finalize(() => {
+          console.log(
+            'FINALIZÓ LA PETICIÓN DE TASKS'
+          );
 
-        this.tasks = Array.isArray(tasks)
-          ? tasks
-          : [];
+          this.loading = false;
 
-        this.loading = false;
-      },
+          console.log(
+            'LOADING FINAL:',
+            this.loading
+          );
+        })
+      )
+      .subscribe({
+        next: (tasks) => {
+          console.log(
+            'RESPUESTA DE TASKS:',
+            tasks
+          );
 
-      error: (error) => {
-        console.error(
-          'ERROR REAL CARGANDO TASKS:',
-          error
-        );
+          if (Array.isArray(tasks)) {
+            this.tasks = tasks;
+          } else {
+            console.warn(
+              'La respuesta de /tasks no es un arreglo:',
+              tasks
+            );
 
-        console.error(
-          'STATUS:',
-          error?.status
-        );
+            this.tasks = [];
+          }
 
-        console.error(
-          'ERROR:',
-          error?.error
-        );
+          console.log(
+            'TAREAS CARGADAS:',
+            this.tasks
+          );
+        },
 
-        this.tasks = [];
+        error: (error) => {
+          console.error(
+            'ERROR REAL CARGANDO TASKS:',
+            error
+          );
 
-        this.error =
-          'No se pudieron cargar las tareas.';
+          console.error(
+            'STATUS:',
+            error?.status
+          );
 
-        this.loading = false;
-      },
-    });
+          console.error(
+            'ERROR:',
+            error?.error
+          );
+
+          this.tasks = [];
+
+          this.error =
+            'No se pudieron cargar las tareas.';
+        },
+      });
   }
 
   // ============================================================
@@ -442,8 +456,7 @@ export class TaskListComponent implements OnInit {
             task.id
           ];
 
-          this.deletingTaskId =
-            null;
+          this.deletingTaskId = null;
         },
 
         error: (error) => {
@@ -452,8 +465,7 @@ export class TaskListComponent implements OnInit {
             error
           );
 
-          this.deletingTaskId =
-            null;
+          this.deletingTaskId = null;
         },
       });
   }
@@ -470,6 +482,7 @@ export class TaskListComponent implements OnInit {
     ) {
       this.expandedTaskId = null;
       this.reminderFormTaskId = null;
+
       return;
     }
 
@@ -495,10 +508,17 @@ export class TaskListComponent implements OnInit {
 
     this.reminderService
       .getReminders(taskId)
+      .pipe(
+        finalize(() => {
+          this.remindersLoading[
+            taskId
+          ] = false;
+        })
+      )
       .subscribe({
         next: (reminders) => {
           console.log(
-            'RECORDATORIOS DE TAREA',
+            'RECORDATORIOS DE TAREA:',
             taskId,
             reminders
           );
@@ -508,10 +528,6 @@ export class TaskListComponent implements OnInit {
           ] = Array.isArray(reminders)
             ? reminders
             : [];
-
-          this.remindersLoading[
-            taskId
-          ] = false;
         },
 
         error: (error) => {
@@ -528,10 +544,6 @@ export class TaskListComponent implements OnInit {
             taskId
           ] =
             'No se pudieron cargar los recordatorios.';
-
-          this.remindersLoading[
-            taskId
-          ] = false;
         },
       });
   }

@@ -10,7 +10,13 @@ export const routes: Routes = [
         (m) => m.LoginComponent
       ),
   },
-
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/pages/register/register').then(
+        (m) => m.RegisterComponent
+      ),
+  },
   {
     path: 'tasks',
     canActivate: [authGuard],
@@ -19,13 +25,11 @@ export const routes: Routes = [
         (m) => m.TaskListComponent
       ),
   },
-
   {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',
   },
-
   {
     path: '**',
     redirectTo: 'login',

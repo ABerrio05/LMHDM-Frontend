@@ -5,21 +5,24 @@ import { AuthService } from '../auth/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+
   const token = authService.getAccessToken();
 
-  let authReq = req.clone({
-    setHeaders: {
-      'ngrok-skip-browser-warning': 'true',
-    },
-  });
+  let headers = req.headers.set(
+    'ngrok-skip-browser-warning',
+    'true'
+  );
 
   if (token) {
-    authReq = authReq.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    headers = headers.set(
+      'Authorization',
+      `Bearer ${token}`
+    );
   }
+
+  const authReq = req.clone({
+    headers,
+  });
 
   return next(authReq);
 };
