@@ -1,0 +1,647 @@
+<section class="tasks-page">
+
+  <!-- ============================================================
+       ENCABEZADO
+       ============================================================ -->
+
+  <header class="tasks-header">
+    <div>
+      <h1>Mis tareas</h1>
+      <p>Administra tus tareas pendientes.</p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openCreateForm()"
+    >
+      + Nueva tarea
+    </button>
+  </header>
+
+
+  <!-- ============================================================
+       FORMULARIO CREAR TAREA
+       ============================================================ -->
+
+  @if (showCreateForm) {
+
+    <form
+      class="task-form"
+      [formGroup]="taskForm"
+      (ngSubmit)="createTask()"
+    >
+
+      <h2>Nueva tarea</h2>
+
+      <label for="title">
+        Título
+      </label>
+
+      <input
+        id="title"
+        type="text"
+        formControlName="title"
+        placeholder="Ej. Terminar informe"
+      />
+
+      @if (
+        taskForm.controls.title.touched &&
+        taskForm.controls.title.invalid
+      ) {
+        <small>
+          El título es obligatorio.
+        </small>
+      }
+
+
+      <label for="description">
+        Descripción
+      </label>
+
+      <textarea
+        id="description"
+        formControlName="description"
+        placeholder="Descripción de la tarea"
+      ></textarea>
+
+
+      <label for="dueDate">
+        Fecha límite
+      </label>
+
+      <input
+        id="dueDate"
+        type="datetime-local"
+        formControlName="dueDate"
+      />
+
+
+      <label for="priority">
+        Prioridad
+      </label>
+
+      <select
+        id="priority"
+        formControlName="priority"
+      >
+        <option value="ALTA">
+          Alta
+        </option>
+
+        <option value="MEDIA">
+          Media
+        </option>
+
+        <option value="BAJA">
+          Baja
+        </option>
+      </select>
+
+
+      @if (createError) {
+        <p class="message error">
+          {{ createError }}
+        </p>
+      }
+
+
+      <div class="form-actions">
+
+        <button
+          type="submit"
+          [disabled]="creating"
+        >
+          {{
+            creating
+              ? 'Creando...'
+              : 'Crear tarea'
+          }}
+        </button>
+
+        <button
+          type="button"
+          (click)="cancelCreate()"
+          [disabled]="creating"
+        >
+          Cancelar
+        </button>
+
+      </div>
+
+    </form>
+
+  }
+
+
+  <!-- ============================================================
+       ESTADO DE CARGA
+       ============================================================ -->
+
+  @if (loading) {
+
+    <div class="message">
+      <p>Cargando tareas...</p>
+    </div>
+
+  }
+
+
+  <!-- ============================================================
+       ERROR AL CARGAR
+       ============================================================ -->
+
+  @if (!loading && error) {
+
+    <div class="message error">
+      <p>{{ error }}</p>
+
+      <button
+        type="button"
+        (click)="loadTasks()"
+      >
+        Reintentar
+      </button>
+    </div>
+
+  }
+
+
+  <!-- ============================================================
+       SIN TAREAS
+       ============================================================ -->
+
+  @if (
+    !loading &&
+    !error &&
+    tasks.length === 0 &&
+    !showCreateForm
+  ) {
+
+    <div class="empty-state">
+
+      <h2>
+        No tienes tareas todavía
+      </h2>
+
+      <p>
+        Cuando crees una tarea aparecerá aquí.
+      </p>
+
+      <button
+        type="button"
+        (click)="openCreateForm()"
+      >
+        Crear mi primera tarea
+      </button>
+
+    </div>
+
+  }
+
+
+  <!-- ============================================================
+       LISTA DE TAREAS
+       ============================================================ -->
+
+  @if (
+    !loading &&
+    !error &&
+    tasks.length > 0
+  ) {
+
+    <div class="tasks-list">
+
+      @for (
+        task of tasks;
+        track task.id
+      ) {
+
+        <article class="task-card">
+
+          <h2>
+            {{ task.title }}
+          </h2>
+
+
+          @if (task.description) {
+
+            <p>
+              {{ task.description }}
+            </p>
+
+          }
+
+
+          @if (task.dueDate) {
+
+            <p>
+              <strong>Fecha límite:</strong>
+              {{ task.dueDate }}
+            </p>
+
+          }
+
+
+          <p>
+            <strong>Prioridad:</strong>
+            {{ task.priority }}
+          </p>
+
+
+          <p>
+            <strong>Estado:</strong>
+            {{ task.status }}
+          </p>
+
+
+          <!-- ====================================================
+               ACCIONES DE TAREA
+               ==================================================== -->
+
+          <div class="task-actions">
+
+            @if (task.status !== 'COMPLETADA') {
+
+              <button
+                type="button"
+                (click)="completeTask(task)"
+              >
+                Completar
+              </button>
+
+            }
+
+
+            <button
+              type="button"
+              (click)="openEditForm(task)"
+            >
+              Editar
+            </button>
+
+
+            <button
+              type="button"
+              (click)="deleteTask(task)"
+              [disabled]="deletingTaskId === task.id"
+            >
+              {{
+                deletingTaskId === task.id
+                  ? 'Eliminando...'
+                  : 'Eliminar'
+              }}
+            </button>
+
+
+            <button
+              type="button"
+              (click)="toggleReminders(task.id)"
+            >
+              {{
+                expandedTaskId === task.id
+                  ? 'Ocultar recordatorios'
+                  : 'Recordatorios'
+              }}
+            </button>
+
+          </div>
+
+
+          <!-- ====================================================
+               FORMULARIO EDITAR TAREA
+               ==================================================== -->
+
+          @if (editingTaskId === task.id) {
+
+            <form
+              class="task-form"
+              [formGroup]="editForm"
+              (ngSubmit)="updateTask()"
+            >
+
+              <h3>
+                Editar tarea
+              </h3>
+
+
+              <label for="edit-title">
+                Título
+              </label>
+
+              <input
+                id="edit-title"
+                type="text"
+                formControlName="title"
+              />
+
+
+              <label for="edit-description">
+                Descripción
+              </label>
+
+              <textarea
+                id="edit-description"
+                formControlName="description"
+              ></textarea>
+
+
+              <label for="edit-dueDate">
+                Fecha límite
+              </label>
+
+              <input
+                id="edit-dueDate"
+                type="datetime-local"
+                formControlName="dueDate"
+              />
+
+
+              <label for="edit-priority">
+                Prioridad
+              </label>
+
+              <select
+                id="edit-priority"
+                formControlName="priority"
+              >
+
+                <option value="ALTA">
+                  Alta
+                </option>
+
+                <option value="MEDIA">
+                  Media
+                </option>
+
+                <option value="BAJA">
+                  Baja
+                </option>
+
+              </select>
+
+
+              @if (updateError) {
+
+                <p class="message error">
+                  {{ updateError }}
+                </p>
+
+              }
+
+
+              <div class="form-actions">
+
+                <button
+                  type="submit"
+                  [disabled]="updating"
+                >
+                  {{
+                    updating
+                      ? 'Guardando...'
+                      : 'Guardar cambios'
+                  }}
+                </button>
+
+
+                <button
+                  type="button"
+                  (click)="cancelEdit()"
+                  [disabled]="updating"
+                >
+                  Cancelar
+                </button>
+
+              </div>
+
+            </form>
+
+          }
+
+
+          <!-- ====================================================
+               RECORDATORIOS
+               ==================================================== -->
+
+          @if (expandedTaskId === task.id) {
+
+            <section class="reminders-section">
+
+              <div class="reminders-header">
+
+                <h3>
+                  Recordatorios
+                </h3>
+
+
+                <button
+                  type="button"
+                  (click)="openReminderForm(task.id)"
+                >
+                  + Agregar recordatorio
+                </button>
+
+              </div>
+
+
+              <!-- Cargando recordatorios -->
+
+              @if (remindersLoading[task.id]) {
+
+                <p>
+                  Cargando recordatorios...
+                </p>
+
+              }
+
+
+              <!-- Error recordatorios -->
+
+              @if (reminderError[task.id]) {
+
+                <p class="message error">
+                  {{ reminderError[task.id] }}
+                </p>
+
+              }
+
+
+              <!-- Sin recordatorios -->
+
+              @if (
+                !remindersLoading[task.id] &&
+                !reminderError[task.id] &&
+                (reminders[task.id] ?? []).length === 0
+              ) {
+
+                <p>
+                  No hay recordatorios para esta tarea.
+                </p>
+
+              }
+
+
+              <!-- Lista de recordatorios -->
+
+              @if (
+                !remindersLoading[task.id] &&
+                (reminders[task.id] ?? []).length > 0
+              ) {
+
+                <div class="reminders-list">
+
+                  @for (
+                    reminder of reminders[task.id];
+                    track reminder.id
+                  ) {
+
+                    <article class="reminder-card">
+
+                      <p>
+                        <strong>Fecha:</strong>
+                        {{ reminder.scheduledAt }}
+                      </p>
+
+
+                      <p>
+                        <strong>Mensaje:</strong>
+                        {{ reminder.message }}
+                      </p>
+
+
+                      <button
+                        type="button"
+                        (click)="
+                          deleteReminder(
+                            reminder.id,
+                            task.id
+                          )
+                        "
+                      >
+                        Eliminar
+                      </button>
+
+                    </article>
+
+                  }
+
+                </div>
+
+              }
+
+
+              <!-- ==================================================
+                   FORMULARIO NUEVO RECORDATORIO
+                   ================================================== -->
+
+              @if (
+                reminderFormTaskId === task.id
+              ) {
+
+                <form
+                  class="reminder-form"
+                  [formGroup]="reminderForm"
+                  (ngSubmit)="createReminder()"
+                >
+
+                  <h4>
+                    Nuevo recordatorio
+                  </h4>
+
+
+                  <label for="scheduledAt">
+                    Fecha y hora
+                  </label>
+
+                  <input
+                    id="scheduledAt"
+                    type="datetime-local"
+                    formControlName="scheduledAt"
+                  />
+
+
+                  @if (
+                    reminderForm.controls.scheduledAt.touched &&
+                    reminderForm.controls.scheduledAt.invalid
+                  ) {
+
+                    <small>
+                      La fecha y hora son obligatorias.
+                    </small>
+
+                  }
+
+
+                  <label for="message">
+                    Mensaje
+                  </label>
+
+                  <input
+                    id="message"
+                    type="text"
+                    formControlName="message"
+                    placeholder="Ej. La tarea vence pronto"
+                  />
+
+
+                  @if (
+                    reminderForm.controls.message.touched &&
+                    reminderForm.controls.message.invalid
+                  ) {
+
+                    <small>
+                      El mensaje es obligatorio.
+                    </small>
+
+                  }
+
+
+                  @if (reminderCreateError) {
+
+                    <p class="message error">
+                      {{ reminderCreateError }}
+                    </p>
+
+                  }
+
+
+                  <div class="form-actions">
+
+                    <button
+                      type="submit"
+                      [disabled]="creatingReminder"
+                    >
+                      {{
+                        creatingReminder
+                          ? 'Guardando...'
+                          : 'Guardar recordatorio'
+                      }}
+                    </button>
+
+
+                    <button
+                      type="button"
+                      (click)="cancelReminderForm()"
+                      [disabled]="creatingReminder"
+                    >
+                      Cancelar
+                    </button>
+
+                  </div>
+
+                </form>
+
+              }
+
+            </section>
+
+          }
+
+        </article>
+
+      }
+
+    </div>
+
+  }
+
+</section>

@@ -1,0 +1,70 @@
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+.register-card h1 {
+  margin-bottom: 0.5rem;
+}
+
+.register-description {
+  margin-bottom: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.form-field input {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.error {
+  color: #c62828;
+  font-size: 0.85rem;
+}
+
+.general-error {
+  margin: 1rem 0;
+}
+
+.register-card form > button {
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.register-card form > button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-link {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.login-link button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
