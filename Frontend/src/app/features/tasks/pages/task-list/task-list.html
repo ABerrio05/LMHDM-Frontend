@@ -1,5 +1,17 @@
 <div class="tasks-page">
 
+  @if (toast) {
+    <aside
+      class="toast"
+      [class.toast-error]="toast.kind === 'error'"
+      aria-live="polite"
+    >
+      <span class="toast-icon">{{ toast.kind === 'success' ? '✓' : '!' }}</span>
+      <p>{{ toast.text }}</p>
+      <button type="button" aria-label="Cerrar notificación" (click)="dismissToast()">×</button>
+    </aside>
+  }
+
   <!-- ============================================================
        ENCABEZADO
        ============================================================ -->
@@ -310,21 +322,64 @@
 
   @else {
 
-    <section class="tasks-summary">
-
-      <div>
-
-        <span class="summary-label">
-          TUS TAREAS
-        </span>
-
-        <strong>
-          {{ tasks.length }}
-          {{ tasks.length === 1 ? 'tarea' : 'tareas' }}
-        </strong>
-
+    <section class="dashboard" aria-label="Resumen de tareas">
+      <div class="dashboard-heading">
+        <div>
+          <span class="summary-label">RESUMEN</span>
+          <h2>Tu progreso de hoy</h2>
+        </div>
+        <strong class="completion-rate">{{ completionPercentage }}% completado</strong>
       </div>
 
+      <div class="dashboard-grid">
+        <article class="metric-card metric-total">
+          <span>Total</span>
+          <strong>{{ tasks.length }}</strong>
+          <small>{{ tasks.length === 1 ? 'tarea registrada' : 'tareas registradas' }}</small>
+        </article>
+        <article class="metric-card metric-pending">
+          <span>Pendientes</span>
+          <strong>{{ pendingTaskCount }}</strong>
+          <small>por avanzar</small>
+        </article>
+        <article class="metric-card metric-completed">
+          <span>Completadas</span>
+          <strong>{{ completedTaskCount }}</strong>
+          <small>objetivos logrados</small>
+        </article>
+        <article class="metric-card metric-priority">
+          <span>Prioridad alta</span>
+          <strong>{{ highPriorityTaskCount }}</strong>
+          <small>requieren atención</small>
+        </article>
+      </div>
+
+      <div class="dashboard-details">
+        <div class="priority-distribution">
+          <span>Distribución por prioridad</span>
+          <div class="priority-pills">
+            <span class="priority-pill high">Alta {{ priorityTaskCount('ALTA') }}</span>
+            <span class="priority-pill medium">Media {{ priorityTaskCount('MEDIA') }}</span>
+            <span class="priority-pill low">Baja {{ priorityTaskCount('BAJA') }}</span>
+          </div>
+        </div>
+
+        <div class="upcoming-tasks">
+          <span>Próximas a vencer</span>
+          @if (upcomingTasks.length > 0) {
+            <ul>
+              @for (task of upcomingTasks; track task.id) {
+                <li>
+                  <strong>{{ task.title }}</strong>
+                  <time>{{ task.dueDate | date:'dd MMM, HH:mm' }}</time>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p>No hay fechas límite próximas.</p>
+          }
+        </div>
+      </div>
     </section>
 
 
@@ -928,6 +983,24 @@
 
     </section>
 
+  }
+
+  @if (confirmationAction) {
+    <div class="confirmation-backdrop" role="presentation">
+      <section class="confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-title">
+        <span class="confirmation-icon">!</span>
+        <h2 id="confirmation-title">{{ confirmationTitle }}</h2>
+        <p>{{ confirmationMessage }}</p>
+        <div class="confirmation-actions">
+          <button type="button" class="secondary-action" (click)="cancelConfirmation()">
+            Cancelar
+          </button>
+          <button type="button" class="danger-action" (click)="confirmAction()">
+            Eliminar
+          </button>
+        </div>
+      </section>
+    </div>
   }
 
 </div>

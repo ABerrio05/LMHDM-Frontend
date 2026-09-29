@@ -29,6 +29,13 @@ import { ReminderService } from '../../../../infrastructure/reminders/reminder.s
 
 import { AuthService } from '../../../../core/auth/auth.service';
 
+type ToastKind = 'success' | 'error';
+
+interface ToastMessage {
+  kind: ToastKind;
+  text: string;
+}
+
 
 @Component({
   selector: 'app-task-list',
@@ -77,6 +84,14 @@ export class TaskListComponent implements OnInit {
   loading = false;
 
   error = '';
+
+  toast: ToastMessage | null = null;
+
+  confirmationTitle = '';
+
+  confirmationMessage = '';
+
+  confirmationAction: (() => void) | null = null;
 
 
   // ============================================================
@@ -213,6 +228,46 @@ export class TaskListComponent implements OnInit {
     this.loadTasks();
   }
 
+  get pendingTaskCount(): number {
+    return this.tasks.filter((task) => task.status !== 'COMPLETADA').length;
+  }
+
+  get completedTaskCount(): number {
+    return this.tasks.filter((task) => task.status === 'COMPLETADA').length;
+  }
+
+  get highPriorityTaskCount(): number {
+    return this.tasks.filter(
+      (task) => task.status !== 'COMPLETADA' && task.priority === 'ALTA'
+    ).length;
+  }
+
+  priorityTaskCount(priority: Task['priority']): number {
+    return this.tasks.filter((task) => task.priority === priority).length;
+  }
+
+  get upcomingTasks(): Task[] {
+    const now = new Date();
+
+    return this.tasks
+      .filter((task) => task.status !== 'COMPLETADA' && task.dueDate)
+      .filter((task) => new Date(task.dueDate as string) >= now)
+      .sort(
+        (first, second) =>
+          new Date(first.dueDate as string).getTime() -
+          new Date(second.dueDate as string).getTime()
+      )
+      .slice(0, 3);
+  }
+
+  get completionPercentage(): number {
+    if (this.tasks.length === 0) {
+      return 0;
+    }
+
+    return Math.round((this.completedTaskCount / this.tasks.length) * 100);
+  }
+
 
   // ============================================================
   // CERRAR SESIÓN
@@ -231,6 +286,60 @@ export class TaskListComponent implements OnInit {
     );
 
     this.router.navigate(['/login']);
+  }
+
+  dismissToast(): void {
+    this.toast = null;
+  }
+
+  cancelConfirmation(): void {
+    this.confirmationAction = null;
+    this.confirmationTitle = '';
+    this.confirmationMessage = '';
+  }
+
+  confirmAction(): void {
+    const action = this.confirmationAction;
+
+    this.cancelConfirmation();
+
+    action?.();
+  }
+
+  private showToast(text: string, kind: ToastKind = 'success'): void {
+    this.toast = { text, kind };
+
+    window.setTimeout(() => {
+      if (this.toast?.text === text) {
+        this.toast = null;
+      }
+    }, 4200);
+  }
+
+  private askForConfirmation(
+    title: string,
+    message: string,
+    action: () => void
+  ): void {
+    this.confirmationTitle = title;
+    this.confirmationMessage = message;
+    this.confirmationAction = action;
+  }
+
+  private getRequestError(error: any, fallback: string): string {
+    const response = error?.error;
+
+    if (response?.errors && typeof response.errors === 'object') {
+      const details = Object.values(response.errors).filter(
+        (value): value is string => typeof value === 'string'
+      );
+
+      if (details.length > 0) {
+        return details.join(' ');
+      }
+    }
+
+    return response?.message || fallback;
   }
 
 
@@ -454,6 +563,8 @@ export class TaskListComponent implements OnInit {
 
           this.cancelCreate();
 
+          this.showToast('Tarea creada correctamente.');
+
         },
 
 
@@ -475,8 +586,12 @@ export class TaskListComponent implements OnInit {
           );
 
 
-          this.createError =
-            'No se pudo crear la tarea.';
+          this.createError = this.getRequestError(
+            error,
+            'No se pudo crear la tarea.'
+          );
+
+          this.showToast(this.createError, 'error');
 
         },
 
@@ -697,6 +812,8 @@ export class TaskListComponent implements OnInit {
 
           this.changeDetectorRef.detectChanges();
 
+          this.showToast('Cambios guardados correctamente.');
+
         })
 
       )
@@ -800,8 +917,12 @@ export class TaskListComponent implements OnInit {
           );
 
 
-          this.updateError =
-            'No se pudo actualizar la tarea.';
+          this.updateError = this.getRequestError(
+            error,
+            'No se pudo actualizar la tarea.'
+          );
+
+          this.showToast(this.updateError, 'error');
 
         },
 
@@ -909,6 +1030,8 @@ export class TaskListComponent implements OnInit {
 
           this.changeDetectorRef.detectChanges();
 
+          this.showToast('Tarea marcada como completada.');
+
         },
 
 
@@ -917,6 +1040,11 @@ export class TaskListComponent implements OnInit {
           console.error(
             'ERROR COMPLETANDO TAREA:',
             error
+          );
+
+          this.showToast(
+            this.getRequestError(error, 'No se pudo completar la tarea.'),
+            'error'
           );
 
         },
@@ -930,17 +1058,14 @@ export class TaskListComponent implements OnInit {
   // ============================================================
 
   deleteTask(task: Task): void {
+    this.askForConfirmation(
+      '¿Eliminar esta tarea?',
+      `Eliminarás “${task.title}” y sus recordatorios asociados. Esta acción no se puede deshacer.`,
+      () => this.executeDeleteTask(task)
+    );
+  }
 
-    const confirmed =
-      window.confirm(
-        `¿Seguro que deseas eliminar la tarea "${task.title}"?`
-      );
-
-
-    if (!confirmed) {
-
-      return;
-    }
+  private executeDeleteTask(task: Task): void {
 
 
     console.log(
@@ -996,6 +1121,8 @@ export class TaskListComponent implements OnInit {
             task.id
           ];
 
+          this.showToast('Tarea eliminada correctamente.');
+
         },
 
 
@@ -1004,6 +1131,11 @@ export class TaskListComponent implements OnInit {
           console.error(
             'ERROR ELIMINANDO TAREA:',
             error
+          );
+
+          this.showToast(
+            this.getRequestError(error, 'No se pudo eliminar la tarea.'),
+            'error'
           );
 
         },
@@ -1304,6 +1436,8 @@ export class TaskListComponent implements OnInit {
 
           this.cancelReminderForm();
 
+          this.showToast('Recordatorio creado correctamente.');
+
         },
 
 
@@ -1315,8 +1449,12 @@ export class TaskListComponent implements OnInit {
           );
 
 
-          this.reminderCreateError =
-            'No se pudo crear el recordatorio.';
+          this.reminderCreateError = this.getRequestError(
+            error,
+            'No se pudo crear el recordatorio.'
+          );
+
+          this.showToast(this.reminderCreateError, 'error');
 
         },
 
@@ -1332,17 +1470,17 @@ export class TaskListComponent implements OnInit {
     reminderId: number,
     taskId: number
   ): void {
+    this.askForConfirmation(
+      '¿Eliminar este recordatorio?',
+      'Esta acción no se puede deshacer.',
+      () => this.executeDeleteReminder(reminderId, taskId)
+    );
+  }
 
-    const confirmed =
-      window.confirm(
-        '¿Seguro que deseas eliminar este recordatorio?'
-      );
-
-
-    if (!confirmed) {
-
-      return;
-    }
+  private executeDeleteReminder(
+    reminderId: number,
+    taskId: number
+  ): void {
 
 
     console.log(
@@ -1387,6 +1525,8 @@ export class TaskListComponent implements OnInit {
 
           this.changeDetectorRef.detectChanges();
 
+          this.showToast('Recordatorio eliminado correctamente.');
+
         },
 
 
@@ -1395,6 +1535,11 @@ export class TaskListComponent implements OnInit {
           console.error(
             'ERROR ELIMINANDO RECORDATORIO:',
             error
+          );
+
+          this.showToast(
+            this.getRequestError(error, 'No se pudo eliminar el recordatorio.'),
+            'error'
           );
 
         },
