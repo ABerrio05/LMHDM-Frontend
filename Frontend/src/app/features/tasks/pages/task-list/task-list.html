@@ -5,17 +5,49 @@
        ============================================================ -->
 
   <header class="tasks-header">
-    <div>
-      <h1>Mis tareas</h1>
-      <p>Administra tus tareas pendientes.</p>
+
+    <div class="tasks-title">
+
+      <span class="brand-name">
+        NEXO
+      </span>
+
+      <h1>
+        Mis tareas
+      </h1>
+
+      <p>
+        Organiza lo que tienes pendiente y mantén todo bajo control.
+      </p>
+
     </div>
 
-    <button
-      type="button"
-      (click)="openCreateForm()"
-    >
-      + Nueva tarea
-    </button>
+
+    <div class="header-actions">
+
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()"
+      >
+        <span class="button-icon">
+          ↪
+        </span>
+
+        Cerrar sesión
+      </button>
+
+
+      <button
+        type="button"
+        class="new-task-button"
+        (click)="openCreateForm()"
+      >
+        + Nueva tarea
+      </button>
+
+    </div>
+
   </header>
 
 
@@ -26,82 +58,126 @@
   @if (showCreateForm) {
 
     <form
-      class="task-form"
+      class="task-form create-task-form"
       [formGroup]="taskForm"
       (ngSubmit)="createTask()"
     >
 
-      <h2>Nueva tarea</h2>
+      <div class="form-header">
 
-      <label for="title">
-        Título
-      </label>
+        <div>
+          <span class="form-eyebrow">
+            NUEVA TAREA
+          </span>
 
-      <input
-        id="title"
-        type="text"
-        formControlName="title"
-        placeholder="Ej. Terminar informe"
-      />
+          <h2>
+            Crear tarea
+          </h2>
 
-      @if (
-        taskForm.controls.title.touched &&
-        taskForm.controls.title.invalid
-      ) {
-        <small>
-          El título es obligatorio.
-        </small>
-      }
+          <p>
+            Agrega una nueva tarea a tu lista.
+          </p>
+        </div>
+
+      </div>
 
 
-      <label for="description">
-        Descripción
-      </label>
+      <div class="form-grid">
 
-      <textarea
-        id="description"
-        formControlName="description"
-        placeholder="Descripción de la tarea"
-      ></textarea>
+        <div class="form-field form-field-full">
+
+          <label for="title">
+            Título
+          </label>
+
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            placeholder="Ej. Terminar informe"
+          />
+
+          @if (
+            taskForm.controls.title.touched &&
+            taskForm.controls.title.invalid
+          ) {
+
+            <small class="field-error">
+              El título es obligatorio.
+            </small>
+
+          }
+
+        </div>
 
 
-      <label for="dueDate">
-        Fecha límite
-      </label>
+        <div class="form-field form-field-full">
 
-      <input
-        id="dueDate"
-        type="datetime-local"
-        formControlName="dueDate"
-      />
+          <label for="description">
+            Descripción
+          </label>
+
+          <textarea
+            id="description"
+            formControlName="description"
+            placeholder="Describe brevemente la tarea..."
+            rows="4"
+          ></textarea>
+
+        </div>
 
 
-      <label for="priority">
-        Prioridad
-      </label>
+        <div class="form-field">
 
-      <select
-        id="priority"
-        formControlName="priority"
-      >
-        <option value="ALTA">
-          Alta
-        </option>
+          <label for="dueDate">
+            Fecha límite
+          </label>
 
-        <option value="MEDIA">
-          Media
-        </option>
+          <input
+            id="dueDate"
+            type="datetime-local"
+            formControlName="dueDate"
+          />
 
-        <option value="BAJA">
-          Baja
-        </option>
-      </select>
+        </div>
+
+
+        <div class="form-field">
+
+          <label for="priority">
+            Prioridad
+          </label>
+
+          <select
+            id="priority"
+            formControlName="priority"
+          >
+
+            <option value="ALTA">
+              Alta
+            </option>
+
+            <option value="MEDIA">
+              Media
+            </option>
+
+            <option value="BAJA">
+              Baja
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
 
 
       @if (createError) {
+
         <p class="message error">
           {{ createError }}
         </p>
+
       }
 
 
@@ -109,6 +185,7 @@
 
         <button
           type="submit"
+          class="primary-action"
           [disabled]="creating"
         >
           {{
@@ -118,8 +195,10 @@
           }}
         </button>
 
+
         <button
           type="button"
+          class="secondary-action"
           (click)="cancelCreate()"
           [disabled]="creating"
         >
@@ -139,9 +218,19 @@
 
   @if (loading) {
 
-    <div class="message">
-      <p>Cargando tareas...</p>
-    </div>
+    <section class="state-card loading-state">
+
+      <div class="spinner"></div>
+
+      <h2>
+        Cargando tus tareas
+      </h2>
+
+      <p>
+        Un momento, estamos organizando todo...
+      </p>
+
+    </section>
 
   }
 
@@ -152,16 +241,29 @@
 
   @if (!loading && error) {
 
-    <div class="message error">
-      <p>{{ error }}</p>
+    <section class="state-card error-state">
+
+      <div class="state-icon">
+        !
+      </div>
+
+      <h2>
+        No pudimos cargar tus tareas
+      </h2>
+
+      <p>
+        {{ error }}
+      </p>
 
       <button
         type="button"
+        class="primary-action"
         (click)="loadTasks()"
       >
         Reintentar
       </button>
-    </div>
+
+    </section>
 
   }
 
@@ -177,7 +279,15 @@
     !showCreateForm
   ) {
 
-    <div class="empty-state">
+    <section class="state-card empty-state">
+
+      <div class="empty-icon">
+        ✓
+      </div>
+
+      <span class="form-eyebrow">
+        TODO EN ORDEN
+      </span>
 
       <h2>
         No tienes tareas todavía
@@ -189,12 +299,13 @@
 
       <button
         type="button"
+        class="primary-action"
         (click)="openCreateForm()"
       >
         Crear mi primera tarea
       </button>
 
-    </div>
+    </section>
 
   }
 
@@ -209,6 +320,24 @@
     tasks.length > 0
   ) {
 
+    <div class="tasks-summary">
+
+      <div>
+
+        <span class="summary-label">
+          TUS TAREAS
+        </span>
+
+        <strong>
+          {{ tasks.length }}
+          {{ tasks.length === 1 ? 'tarea' : 'tareas' }}
+        </strong>
+
+      </div>
+
+    </div>
+
+
     <div class="tasks-list">
 
       @for (
@@ -216,47 +345,102 @@
         track task.id
       ) {
 
-        <article class="task-card">
+        <article
+          class="task-card"
+          [class.completed]="task.status === 'COMPLETADA'"
+        >
 
-          <h2>
-            {{ task.title }}
-          </h2>
+          <!-- ==================================================
+               CABECERA DE LA TAREA
+               ================================================== -->
 
+          <div class="task-card-header">
 
-          @if (task.description) {
-
-            <p>
-              {{ task.description }}
-            </p>
-
-          }
-
-
-          @if (task.dueDate) {
-
-            <p>
-              <strong>Fecha límite:</strong>
-              {{ task.dueDate }}
-            </p>
-
-          }
+            <div class="task-number">
+              TAREA #{{ task.id }}
+            </div>
 
 
-          <p>
-            <strong>Prioridad:</strong>
-            {{ task.priority }}
-          </p>
+            @if (task.status === 'COMPLETADA') {
+
+              <span class="status-badge completed-status">
+                Completada
+              </span>
+
+            } @else {
+
+              <span class="status-badge pending-status">
+                Pendiente
+              </span>
+
+            }
+
+          </div>
 
 
-          <p>
-            <strong>Estado:</strong>
-            {{ task.status }}
-          </p>
+          <!-- ==================================================
+               CONTENIDO
+               ================================================== -->
+
+          <div class="task-content">
+
+            <h2>
+              {{ task.title }}
+            </h2>
 
 
-          <!-- ====================================================
-               ACCIONES DE TAREA
-               ==================================================== -->
+            @if (task.description) {
+
+              <p class="task-description">
+                {{ task.description }}
+              </p>
+
+            }
+
+
+            <div class="task-meta">
+
+              @if (task.dueDate) {
+
+                <div class="meta-box">
+
+                  <span>
+                    FECHA LÍMITE
+                  </span>
+
+                  <strong>
+                    {{ task.dueDate }}
+                  </strong>
+
+                </div>
+
+              }
+
+
+              <div class="meta-box">
+
+                <span>
+                  PRIORIDAD
+                </span>
+
+                <strong
+                  [class.priority-high]="task.priority === 'ALTA'"
+                  [class.priority-medium]="task.priority === 'MEDIA'"
+                  [class.priority-low]="task.priority === 'BAJA'"
+                >
+                  {{ task.priority }}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ==================================================
+               ACCIONES
+               ================================================== -->
 
           <div class="task-actions">
 
@@ -264,9 +448,10 @@
 
               <button
                 type="button"
+                class="action-button complete-button"
                 (click)="completeTask(task)"
               >
-                Completar
+                ✓ Completar
               </button>
 
             }
@@ -274,14 +459,16 @@
 
             <button
               type="button"
+              class="action-button edit-button"
               (click)="openEditForm(task)"
             >
-              Editar
+              ✎ Editar
             </button>
 
 
             <button
               type="button"
+              class="action-button delete-button"
               (click)="deleteTask(task)"
               [disabled]="deletingTaskId === task.id"
             >
@@ -295,6 +482,7 @@
 
             <button
               type="button"
+              class="action-button reminder-button"
               (click)="toggleReminders(task.id)"
             >
               {{
@@ -307,77 +495,110 @@
           </div>
 
 
-          <!-- ====================================================
+          <!-- ==================================================
                FORMULARIO EDITAR TAREA
-               ==================================================== -->
+               ================================================== -->
 
           @if (editingTaskId === task.id) {
 
             <form
-              class="task-form"
+              class="task-form edit-task-form"
               [formGroup]="editForm"
               (ngSubmit)="updateTask()"
             >
 
-              <h3>
-                Editar tarea
-              </h3>
+              <div class="form-header">
+
+                <div>
+
+                  <span class="form-eyebrow">
+                    EDITAR
+                  </span>
+
+                  <h3>
+                    Editar tarea
+                  </h3>
+
+                </div>
+
+              </div>
 
 
-              <label for="edit-title">
-                Título
-              </label>
+              <div class="form-grid">
 
-              <input
-                id="edit-title"
-                type="text"
-                formControlName="title"
-              />
+                <div class="form-field form-field-full">
 
+                  <label for="edit-title">
+                    Título
+                  </label>
 
-              <label for="edit-description">
-                Descripción
-              </label>
+                  <input
+                    id="edit-title"
+                    type="text"
+                    formControlName="title"
+                  />
 
-              <textarea
-                id="edit-description"
-                formControlName="description"
-              ></textarea>
+                </div>
 
 
-              <label for="edit-dueDate">
-                Fecha límite
-              </label>
+                <div class="form-field form-field-full">
 
-              <input
-                id="edit-dueDate"
-                type="datetime-local"
-                formControlName="dueDate"
-              />
+                  <label for="edit-description">
+                    Descripción
+                  </label>
+
+                  <textarea
+                    id="edit-description"
+                    formControlName="description"
+                    rows="4"
+                  ></textarea>
+
+                </div>
 
 
-              <label for="edit-priority">
-                Prioridad
-              </label>
+                <div class="form-field">
 
-              <select
-                id="edit-priority"
-                formControlName="priority"
-              >
+                  <label for="edit-dueDate">
+                    Fecha límite
+                  </label>
 
-                <option value="ALTA">
-                  Alta
-                </option>
+                  <input
+                    id="edit-dueDate"
+                    type="datetime-local"
+                    formControlName="dueDate"
+                  />
 
-                <option value="MEDIA">
-                  Media
-                </option>
+                </div>
 
-                <option value="BAJA">
-                  Baja
-                </option>
 
-              </select>
+                <div class="form-field">
+
+                  <label for="edit-priority">
+                    Prioridad
+                  </label>
+
+                  <select
+                    id="edit-priority"
+                    formControlName="priority"
+                  >
+
+                    <option value="ALTA">
+                      Alta
+                    </option>
+
+                    <option value="MEDIA">
+                      Media
+                    </option>
+
+                    <option value="BAJA">
+                      Baja
+                    </option>
+
+                  </select>
+
+                </div>
+
+              </div>
 
 
               @if (updateError) {
@@ -393,6 +614,7 @@
 
                 <button
                   type="submit"
+                  class="primary-action"
                   [disabled]="updating"
                 >
                   {{
@@ -405,6 +627,7 @@
 
                 <button
                   type="button"
+                  class="secondary-action"
                   (click)="cancelEdit()"
                   [disabled]="updating"
                 >
@@ -418,9 +641,9 @@
           }
 
 
-          <!-- ====================================================
+          <!-- ==================================================
                RECORDATORIOS
-               ==================================================== -->
+               ================================================== -->
 
           @if (expandedTaskId === task.id) {
 
@@ -428,16 +651,25 @@
 
               <div class="reminders-header">
 
-                <h3>
-                  Recordatorios
-                </h3>
+                <div>
+
+                  <span class="form-eyebrow">
+                    RECORDATORIOS
+                  </span>
+
+                  <h3>
+                    Recordatorios
+                  </h3>
+
+                </div>
 
 
                 <button
                   type="button"
+                  class="reminder-add-button"
                   (click)="openReminderForm(task.id)"
                 >
-                  + Agregar recordatorio
+                  + Agregar
                 </button>
 
               </div>
@@ -447,9 +679,9 @@
 
               @if (remindersLoading[task.id]) {
 
-                <p>
+                <div class="reminder-loading">
                   Cargando recordatorios...
-                </p>
+                </div>
 
               }
 
@@ -473,9 +705,9 @@
                 (reminders[task.id] ?? []).length === 0
               ) {
 
-                <p>
+                <div class="no-reminders">
                   No hay recordatorios para esta tarea.
-                </p>
+                </div>
 
               }
 
@@ -496,26 +728,39 @@
 
                     <article class="reminder-card">
 
-                      <p>
-                        <strong>Fecha:</strong>
-                        {{ reminder.scheduledAt }}
-                      </p>
+                      <div class="reminder-info">
+
+                        <span>
+                          FECHA
+                        </span>
+
+                        <strong>
+                          {{ reminder.scheduledAt }}
+                        </strong>
+
+                      </div>
 
 
-                      <p>
-                        <strong>Mensaje:</strong>
-                        {{ reminder.message }}
-                      </p>
+                      <div class="reminder-info">
+
+                        <span>
+                          MENSAJE
+                        </span>
+
+                        <strong>
+                          {{ reminder.message }}
+                        </strong>
+
+                      </div>
 
 
                       <button
                         type="button"
-                        (click)="
-                          deleteReminder(
-                            reminder.id,
-                            task.id
-                          )
-                        "
+                        class="reminder-delete-button"
+                        (click)="deleteReminder(
+                          reminder.id,
+                          task.id
+                        )"
                       >
                         Eliminar
                       </button>
@@ -543,56 +788,78 @@
                   (ngSubmit)="createReminder()"
                 >
 
-                  <h4>
-                    Nuevo recordatorio
-                  </h4>
+                  <div class="form-header">
+
+                    <div>
+
+                      <span class="form-eyebrow">
+                        NUEVO RECORDATORIO
+                      </span>
+
+                      <h4>
+                        Programar recordatorio
+                      </h4>
+
+                    </div>
+
+                  </div>
 
 
-                  <label for="scheduledAt">
-                    Fecha y hora
-                  </label>
+                  <div class="form-grid">
 
-                  <input
-                    id="scheduledAt"
-                    type="datetime-local"
-                    formControlName="scheduledAt"
-                  />
+                    <div class="form-field">
 
+                      <label for="scheduledAt">
+                        Fecha y hora
+                      </label>
 
-                  @if (
-                    reminderForm.controls.scheduledAt.touched &&
-                    reminderForm.controls.scheduledAt.invalid
-                  ) {
+                      <input
+                        id="scheduledAt"
+                        type="datetime-local"
+                        formControlName="scheduledAt"
+                      />
 
-                    <small>
-                      La fecha y hora son obligatorias.
-                    </small>
+                      @if (
+                        reminderForm.controls.scheduledAt.touched &&
+                        reminderForm.controls.scheduledAt.invalid
+                      ) {
 
-                  }
+                        <small class="field-error">
+                          La fecha y hora son obligatorias.
+                        </small>
 
+                      }
 
-                  <label for="message">
-                    Mensaje
-                  </label>
-
-                  <input
-                    id="message"
-                    type="text"
-                    formControlName="message"
-                    placeholder="Ej. La tarea vence pronto"
-                  />
+                    </div>
 
 
-                  @if (
-                    reminderForm.controls.message.touched &&
-                    reminderForm.controls.message.invalid
-                  ) {
+                    <div class="form-field">
 
-                    <small>
-                      El mensaje es obligatorio.
-                    </small>
+                      <label for="message">
+                        Mensaje
+                      </label>
 
-                  }
+                      <input
+                        id="message"
+                        type="text"
+                        formControlName="message"
+                        placeholder="Ej. La tarea vence pronto"
+                      />
+
+                      @if (
+                        reminderForm.controls.message.touched &&
+                        reminderForm.controls.message.invalid
+                      ) {
+
+                        <small class="field-error">
+                          El mensaje es obligatorio.
+                        </small>
+
+                      }
+
+                    </div>
+
+                  </div>
 
 
                   @if (reminderCreateError) {
@@ -608,6 +875,7 @@
 
                     <button
                       type="submit"
+                      class="primary-action"
                       [disabled]="creatingReminder"
                     >
                       {{
@@ -620,6 +888,7 @@
 
                     <button
                       type="button"
+                      class="secondary-action"
                       (click)="cancelReminderForm()"
                       [disabled]="creatingReminder"
                     >

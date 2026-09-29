@@ -1,70 +1,377 @@
 .register-page {
   min-height: 100vh;
+
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 2rem;
+  justify-content: center;
+
+  padding: 2rem 1rem;
+
+  background: #f4f7fb;
+
+  box-sizing: border-box;
 }
 
 .register-card {
   width: 100%;
   max-width: 450px;
-  padding: 2rem;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+
+  padding: 2.5rem;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
-.register-card h1 {
-  margin-bottom: 0.5rem;
+/* ============================================================
+   ENCABEZADO
+   ============================================================ */
+
+.register-header {
+  text-align: center;
+
+  margin-bottom: 2rem;
 }
 
-.register-description {
-  margin-bottom: 1.5rem;
+.register-icon {
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 auto 1rem;
+
+  border-radius: 50%;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.register-header h1 {
+  margin: 0 0 0.5rem;
+
+  color: #172033;
+
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.register-header p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   FORMULARIO
+   ============================================================ */
+
+form {
+  display: flex;
+  flex-direction: column;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
+
+  margin-bottom: 1.25rem;
+}
+
+.form-field label {
+  margin-bottom: 0.5rem;
+
+  color: #334155;
+
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .form-field input {
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.error {
-  color: #c62828;
-  font-size: 0.85rem;
-}
-
-.general-error {
-  margin: 1rem 0;
-}
-
-.register-card form > button {
   width: 100%;
-  padding: 0.8rem;
+
+  box-sizing: border-box;
+
+  padding: 0.85rem 0.9rem;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #172033;
+
+  font-size: 1rem;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.form-field input::placeholder {
+  color: #94a3b8;
+}
+
+.form-field input:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-field input.input-error {
+  border-color: #dc2626;
+
+  background: #fffafa;
+}
+
+.form-field input.input-error:focus {
+  border-color: #dc2626;
+
+  box-shadow:
+    0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* ============================================================
+   VALIDACIONES
+   ============================================================ */
+
+.field-error {
+  margin-top: 0.4rem;
+
+  color: #dc2626;
+
+  font-size: 0.82rem;
+
+  line-height: 1.4;
+}
+
+/* ============================================================
+   ERROR DEL BACKEND
+   ============================================================ */
+
+.message {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 0.65rem;
+
+  margin: 0 0 1rem;
+
+  padding: 0.85rem 0.9rem;
+
+  border-radius: 9px;
+
+  font-size: 0.9rem;
+
+  line-height: 1.4;
+}
+
+.error-message {
+  border: 1px solid #fecaca;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+.message-icon {
+  width: 20px;
+  height: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #dc2626;
+
+  color: #ffffff;
+
+  font-size: 0.75rem;
+
+  font-weight: 700;
+}
+
+/* ============================================================
+   BOTÓN CREAR CUENTA
+   ============================================================ */
+
+.register-button {
+  width: 100%;
+
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.65rem;
+
+  padding: 0.9rem 1rem;
+
   border: none;
-  border-radius: 6px;
+  border-radius: 9px;
+
+  background: #2563eb;
+
+  color: #ffffff;
+
+  font-size: 1rem;
+  font-weight: 600;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease,
+    opacity 0.2s ease;
 }
 
-.register-card form > button:disabled {
-  opacity: 0.6;
+.register-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.register-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.register-button:disabled {
   cursor: not-allowed;
+
+  opacity: 0.7;
 }
 
-.login-link {
-  margin-top: 1.5rem;
+/* ============================================================
+   SPINNER
+   ============================================================ */
+
+.spinner {
+  width: 18px;
+  height: 18px;
+
+  border: 2px solid rgba(255, 255, 255, 0.45);
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   ENLACE LOGIN
+   ============================================================ */
+
+.login-section {
+  margin-top: 1.75rem;
+
+  padding-top: 1.5rem;
+
+  border-top: 1px solid #e2e8f0;
+
   text-align: center;
 }
 
-.login-link button {
+.login-section p {
+  display: inline;
+
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 0.9rem;
+}
+
+.login-section button {
+  margin-left: 0.35rem;
+
+  padding: 0;
+
   border: none;
-  background: none;
+
+  background: transparent;
+
+  color: #2563eb;
+
+  font-size: 0.9rem;
+
+  font-weight: 600;
+
   cursor: pointer;
+}
+
+.login-section button:hover {
   text-decoration: underline;
+}
+
+/* ============================================================
+   MÓVIL
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+  .register-page {
+    min-height: 100dvh;
+
+    padding: 1rem;
+
+    align-items: flex-start;
+  }
+
+  .register-card {
+    margin-top: 2rem;
+
+    padding: 1.5rem;
+
+    border-radius: 14px;
+  }
+
+  .register-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .register-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .register-icon {
+    width: 46px;
+    height: 46px;
+
+    font-size: 1.2rem;
+  }
+
+  .form-field input {
+    min-height: 46px;
+  }
+
+  .register-button {
+    min-height: 46px;
+  }
 }
