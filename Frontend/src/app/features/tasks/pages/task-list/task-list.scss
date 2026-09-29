@@ -1,12 +1,11 @@
 /* ============================================================
-   PÁGINA
+   NEXO — PÁGINA DE TAREAS
    ============================================================ */
 
 .tasks-page {
-  width: min(1100px, calc(100% - 48px));
+  width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 42px 0 70px;
-
+  padding: 42px 0 80px;
   color: #0f172a;
 }
 
@@ -19,7 +18,6 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-
   gap: 32px;
   margin-bottom: 34px;
 }
@@ -30,32 +28,31 @@
 }
 
 .brand-name {
-  margin-bottom: 5px;
-
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 8px;
   color: #2563eb;
-
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 2.5px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 3px;
 }
 
 .tasks-title h1 {
   margin: 0;
-
   color: #0f172a;
-
-  font-size: 42px;
+  font-size: 44px;
   line-height: 1.05;
-  font-weight: 800;
+  font-weight: 850;
+  letter-spacing: -1.5px;
 }
 
 .tasks-title p {
+  max-width: 600px;
   margin: 12px 0 0;
-
   color: #64748b;
-
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 
@@ -66,7 +63,7 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 
@@ -75,25 +72,20 @@
    ============================================================ */
 
 .new-task-button {
-  min-width: 190px;
+  min-width: 180px;
   height: 48px;
-
-  padding: 0 24px;
-
+  padding: 0 22px;
   border: 0;
   border-radius: 12px;
-
   background: #2563eb;
   color: #ffffff;
-
   font-family: inherit;
   font-size: 14px;
-  font-weight: 700;
-
+  font-weight: 800;
   cursor: pointer;
 
   box-shadow:
-    0 8px 18px rgba(37, 99, 235, 0.18);
+    0 8px 20px rgba(37, 99, 235, 0.20);
 
   transition:
     transform 0.2s ease,
@@ -103,11 +95,10 @@
 
 .new-task-button:hover {
   background: #1d4ed8;
-
   transform: translateY(-2px);
 
   box-shadow:
-    0 12px 24px rgba(37, 99, 235, 0.24);
+    0 13px 28px rgba(37, 99, 235, 0.28);
 }
 
 .new-task-button:active {
@@ -121,18 +112,14 @@
 
 .logout-button {
   height: 48px;
-
-  padding: 0 18px;
-
+  padding: 0 17px;
   border: 1px solid #dbe3ef;
   border-radius: 12px;
-
   background: #ffffff;
   color: #475569;
-
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
 
   display: inline-flex;
   align-items: center;
@@ -157,7 +144,6 @@
   background: #fff1f2;
   border-color: #fecdd3;
   color: #dc2626;
-
   transform: translateY(-1px);
 }
 
@@ -172,16 +158,15 @@
 
 .task-form {
   margin-bottom: 30px;
-
-  padding: 28px;
+  padding: 30px;
 
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  border-radius: 22px;
 
   background: #ffffff;
 
   box-shadow:
-    0 12px 35px rgba(15, 23, 42, 0.07);
+    0 18px 45px rgba(15, 23, 42, 0.07);
 }
 
 .create-task-form {
@@ -193,38 +178,41 @@
   margin-bottom: 0;
 
   background: #f8fafc;
+
   box-shadow: none;
 }
 
 
+/* ============================================================
+   CABECERA DE FORMULARIO
+   ============================================================ */
+
 .form-header {
-  margin-bottom: 24px;
+  margin-bottom: 25px;
 }
 
 .form-eyebrow {
   display: block;
-
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 
   color: #2563eb;
 
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.8px;
 }
 
 .form-header h2,
 .form-header h3,
 .form-header h4 {
   margin: 0;
-
   color: #0f172a;
-
-  font-weight: 800;
+  font-weight: 850;
+  letter-spacing: -0.3px;
 }
 
 .form-header h2 {
-  font-size: 25px;
+  font-size: 26px;
 }
 
 .form-header h3 {
@@ -236,18 +224,19 @@
 }
 
 .form-header p {
-  margin: 7px 0 0;
-
+  margin: 8px 0 0;
   color: #64748b;
-
   font-size: 14px;
 }
 
 
+/* ============================================================
+   GRID DE FORMULARIOS
+   ============================================================ */
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
   gap: 20px;
 }
 
@@ -261,14 +250,16 @@
   grid-column: 1 / -1;
 }
 
-
 .form-field label {
   color: #334155;
-
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
+
+/* ============================================================
+   INPUTS
+   ============================================================ */
 
 .form-field input,
 .form-field textarea,
@@ -277,7 +268,7 @@
   box-sizing: border-box;
 
   border: 1px solid #dbe3ef;
-  border-radius: 10px;
+  border-radius: 11px;
 
   background: #ffffff;
   color: #0f172a;
@@ -291,23 +282,29 @@
 
   transition:
     border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 .form-field input {
-  height: 46px;
+  height: 47px;
 }
 
 .form-field textarea {
-  min-height: 100px;
-
+  min-height: 105px;
   resize: vertical;
+  line-height: 1.5;
 }
 
 .form-field select {
-  height: 46px;
-
+  height: 47px;
   cursor: pointer;
+}
+
+.form-field input:hover,
+.form-field textarea:hover,
+.form-field select:hover {
+  border-color: #cbd5e1;
 }
 
 .form-field input:focus,
@@ -316,7 +313,7 @@
   border-color: #2563eb;
 
   box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.10);
+    0 0 0 4px rgba(37, 99, 235, 0.10);
 }
 
 .form-field input::placeholder,
@@ -325,11 +322,14 @@
 }
 
 
+/* ============================================================
+   ERRORES DE CAMPOS
+   ============================================================ */
+
 .field-error {
   color: #dc2626;
-
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 
@@ -340,48 +340,49 @@
 .form-actions {
   display: flex;
   align-items: center;
-
   gap: 10px;
-
   margin-top: 24px;
 }
 
 .primary-action,
 .secondary-action {
-  min-height: 42px;
-
-  padding: 0 18px;
+  min-height: 43px;
+  padding: 0 19px;
 
   border-radius: 10px;
 
   font-family: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
 
   cursor: pointer;
 
   transition:
     transform 0.2s ease,
     background 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .primary-action {
   border: 0;
-
   background: #2563eb;
   color: #ffffff;
+
+  box-shadow:
+    0 6px 14px rgba(37, 99, 235, 0.15);
 }
 
 .primary-action:hover:not(:disabled) {
   background: #1d4ed8;
-
   transform: translateY(-1px);
+
+  box-shadow:
+    0 9px 20px rgba(37, 99, 235, 0.20);
 }
 
 .secondary-action {
   border: 1px solid #dbe3ef;
-
   background: #ffffff;
   color: #475569;
 }
@@ -389,7 +390,6 @@
 .secondary-action:hover:not(:disabled) {
   background: #f8fafc;
   border-color: #cbd5e1;
-
   transform: translateY(-1px);
 }
 
@@ -397,7 +397,6 @@
 .secondary-action:disabled,
 .action-button:disabled {
   opacity: 0.55;
-
   cursor: not-allowed;
 }
 
@@ -408,17 +407,13 @@
 
 .message {
   margin-top: 18px;
-
   padding: 13px 15px;
-
-  border-radius: 10px;
-
+  border-radius: 11px;
   font-size: 13px;
 }
 
 .message.error {
   border: 1px solid #fecaca;
-
   background: #fef2f2;
   color: #b91c1c;
 }
@@ -429,8 +424,7 @@
    ============================================================ */
 
 .state-card {
-  min-height: 230px;
-
+  min-height: 250px;
   padding: 45px 25px;
 
   border: 1px solid #e2e8f0;
@@ -446,25 +440,28 @@
   text-align: center;
 
   box-shadow:
-    0 15px 35px rgba(15, 23, 42, 0.06);
+    0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
 .state-card h2 {
   margin: 18px 0 7px;
-
   color: #0f172a;
-
   font-size: 24px;
+  letter-spacing: -0.4px;
 }
 
 .state-card p {
+  max-width: 450px;
   margin: 0 0 22px;
-
   color: #64748b;
-
   font-size: 14px;
+  line-height: 1.5;
 }
 
+
+/* ============================================================
+   SPINNER
+   ============================================================ */
 
 .spinner {
   width: 34px;
@@ -485,10 +482,14 @@
 }
 
 
+/* ============================================================
+   ICONOS DE ESTADO
+   ============================================================ */
+
 .state-icon,
 .empty-icon {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
 
   border-radius: 50%;
 
@@ -497,7 +498,7 @@
   justify-content: center;
 
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .state-icon {
@@ -520,7 +521,7 @@
    ============================================================ */
 
 .tasks-summary {
-  margin-bottom: 15px;
+  margin-bottom: 17px;
 
   display: flex;
   align-items: center;
@@ -535,15 +536,13 @@
 
 .summary-label {
   color: #94a3b8;
-
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.6px;
 }
 
 .tasks-summary strong {
   color: #334155;
-
   font-size: 14px;
 }
 
@@ -569,6 +568,8 @@
    ============================================================ */
 
 .task-card {
+  position: relative;
+
   min-width: 0;
 
   padding: 24px;
@@ -579,7 +580,9 @@
   background: #ffffff;
 
   box-shadow:
-    0 12px 28px rgba(15, 23, 42, 0.06);
+    0 12px 30px rgba(15, 23, 42, 0.055);
+
+  overflow: hidden;
 
   transition:
     transform 0.2s ease,
@@ -587,17 +590,43 @@
     border-color 0.2s ease;
 }
 
+.task-card::before {
+  content: '';
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 3px;
+
+  background: #2563eb;
+
+  opacity: 0;
+
+  transition: opacity 0.2s ease;
+}
+
 .task-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
 
   border-color: #d5dfed;
 
   box-shadow:
-    0 18px 35px rgba(15, 23, 42, 0.09);
+    0 20px 42px rgba(15, 23, 42, 0.09);
+}
+
+.task-card:hover::before {
+  opacity: 1;
 }
 
 .task-card.completed {
   background: #fbfffd;
+}
+
+.task-card.completed::before {
+  background: #16a34a;
+  opacity: 1;
 }
 
 
@@ -611,26 +640,35 @@
   justify-content: space-between;
 
   gap: 10px;
-
-  margin-bottom: 16px;
+  margin-bottom: 17px;
 }
 
 .task-number {
   color: #2563eb;
 
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.1px;
 }
 
+.task-card.completed .task-number {
+  color: #16a34a;
+}
+
+
+/* ============================================================
+   BADGES DE ESTADO
+   ============================================================ */
 
 .status-badge {
   padding: 6px 10px;
 
   border-radius: 999px;
 
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 0.2px;
 }
 
 .pending-status {
@@ -653,16 +691,17 @@
 
   color: #0f172a;
 
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1.3;
+  font-weight: 850;
+
+  letter-spacing: -0.3px;
 }
 
 .task-card.completed .task-content h2 {
   color: #64748b;
-
   text-decoration: line-through;
 }
-
 
 .task-description {
   margin: 12px 0 0;
@@ -670,15 +709,21 @@
   color: #64748b;
 
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
+
+  word-break: break-word;
 }
 
+
+/* ============================================================
+   INFORMACIÓN DE TAREA
+   ============================================================ */
 
 .task-meta {
   display: flex;
   flex-wrap: wrap;
 
-  gap: 10px;
+  gap: 9px;
 
   margin-top: 22px;
 }
@@ -686,9 +731,12 @@
 .meta-box {
   min-width: 115px;
 
-  padding: 11px;
+  flex: 1;
 
-  border-radius: 10px;
+  padding: 12px;
+
+  border: 1px solid #eef2f7;
+  border-radius: 11px;
 
   background: #f8fafc;
 }
@@ -696,13 +744,13 @@
 .meta-box span {
   display: block;
 
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 
   color: #94a3b8;
 
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.7px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
 }
 
 .meta-box strong {
@@ -712,8 +760,14 @@
 
   font-size: 12px;
   line-height: 1.4;
+
   word-break: break-word;
 }
+
+
+/* ============================================================
+   COLORES DE PRIORIDAD
+   ============================================================ */
 
 .priority-high {
   color: #dc2626 !important;
@@ -753,19 +807,26 @@
   border-radius: 9px;
 
   font-family: inherit;
+
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
 
   cursor: pointer;
 
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .action-button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
+
+
+/* ============================================================
+   COMPLETAR
+   ============================================================ */
 
 .complete-button {
   background: #ecfdf5;
@@ -776,6 +837,11 @@
   background: #d1fae5;
 }
 
+
+/* ============================================================
+   EDITAR
+   ============================================================ */
+
 .edit-button {
   background: #eff6ff;
   color: #2563eb;
@@ -785,6 +851,11 @@
   background: #dbeafe;
 }
 
+
+/* ============================================================
+   ELIMINAR
+   ============================================================ */
+
 .delete-button {
   background: #fef2f2;
   color: #dc2626;
@@ -793,6 +864,11 @@
 .delete-button:hover:not(:disabled) {
   background: #fee2e2;
 }
+
+
+/* ============================================================
+   RECORDATORIOS
+   ============================================================ */
 
 .reminder-button {
   background: #f5f3ff;
@@ -805,7 +881,7 @@
 
 
 /* ============================================================
-   RECORDATORIOS
+   RECORDATORIOS — SECCIÓN
    ============================================================ */
 
 .reminders-section {
@@ -821,7 +897,6 @@
   justify-content: space-between;
 
   gap: 15px;
-
   margin-bottom: 18px;
 }
 
@@ -831,13 +906,18 @@
   color: #0f172a;
 
   font-size: 18px;
+  font-weight: 850;
 }
 
+
+/* ============================================================
+   BOTÓN AGREGAR RECORDATORIO
+   ============================================================ */
 
 .reminder-add-button {
   min-height: 36px;
 
-  padding: 0 12px;
+  padding: 0 13px;
 
   border: 1px solid #ddd6fe;
   border-radius: 9px;
@@ -846,28 +926,35 @@
   color: #7c3aed;
 
   font-family: inherit;
+
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
 
   cursor: pointer;
 
   transition:
     background 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .reminder-add-button:hover {
   background: #ede9fe;
-
+  border-color: #c4b5fd;
   transform: translateY(-1px);
 }
 
+
+/* ============================================================
+   CARGA / SIN RECORDATORIOS
+   ============================================================ */
 
 .reminder-loading,
 .no-reminders {
   padding: 15px;
 
-  border-radius: 10px;
+  border: 1px solid #eef2f7;
+  border-radius: 11px;
 
   background: #f8fafc;
 
@@ -886,12 +973,11 @@
 .reminders-list {
   display: flex;
   flex-direction: column;
-
   gap: 10px;
 }
 
 .reminder-card {
-  padding: 14px;
+  padding: 15px;
 
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -899,37 +985,66 @@
   background: #ffffff;
 
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.reminder-card:hover {
+  border-color: #ddd6fe;
+
+  box-shadow:
+    0 6px 16px rgba(124, 58, 237, 0.06);
+}
+
+.reminder-info {
+  min-width: 0;
 }
 
 .reminder-info span {
   display: block;
 
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 
   color: #94a3b8;
 
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 1px;
 }
 
 .reminder-info strong {
+  display: block;
+
   color: #475569;
 
   font-size: 12px;
   line-height: 1.45;
+
   word-break: break-word;
 }
 
 
+/* ============================================================
+   ELIMINAR RECORDATORIO
+   ============================================================ */
+
 .reminder-delete-button {
-  justify-self: start;
+  justify-self: end;
 
   min-height: 32px;
 
-  padding: 0 10px;
+  padding: 0 11px;
 
   border: 0;
   border-radius: 8px;
@@ -938,25 +1053,31 @@
   color: #dc2626;
 
   font-family: inherit;
+
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
 
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .reminder-delete-button:hover {
   background: #fee2e2;
+  transform: translateY(-1px);
 }
 
 
 /* ============================================================
-   FORMULARIO RECORDATORIO
+   FORMULARIO DE RECORDATORIO
    ============================================================ */
 
 .reminder-form {
   margin-top: 18px;
 
-  padding: 20px;
+  padding: 21px;
 
   border: 1px solid #ddd6fe;
   border-radius: 15px;
@@ -966,48 +1087,44 @@
 
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE — TABLET
    ============================================================ */
 
-@media (max-width: 950px) {
-
+@media (max-width: 1050px) {
   .tasks-list {
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
   }
-
 }
 
 
-@media (max-width: 720px) {
+/* ============================================================
+   RESPONSIVE — TABLET PEQUEÑA
+   ============================================================ */
 
+@media (max-width: 760px) {
   .tasks-page {
     width: min(100% - 28px, 650px);
-
-    padding-top: 28px;
+    padding-top: 30px;
   }
 
   .tasks-header {
     align-items: stretch;
-
     flex-direction: column;
-
     gap: 22px;
   }
 
   .tasks-title h1 {
-    font-size: 36px;
+    font-size: 38px;
   }
 
   .header-actions {
     width: 100%;
-
-    flex-direction: column;
   }
 
   .new-task-button,
   .logout-button {
-    width: 100%;
+    flex: 1;
   }
 
   .tasks-list {
@@ -1022,27 +1139,53 @@
     grid-column: auto;
   }
 
+  .reminder-card {
+    grid-template-columns: 1fr;
+  }
+
+  .reminder-delete-button {
+    justify-self: start;
+  }
 }
 
 
-@media (max-width: 480px) {
+/* ============================================================
+   RESPONSIVE — MÓVIL
+   ============================================================ */
 
+@media (max-width: 560px) {
   .tasks-page {
     width: calc(100% - 20px);
+    padding-top: 24px;
+    padding-bottom: 45px;
+  }
 
-    padding-bottom: 40px;
+  .tasks-title h1 {
+    font-size: 34px;
+    letter-spacing: -1px;
+  }
+
+  .tasks-title p {
+    font-size: 14px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+  }
+
+  .new-task-button,
+  .logout-button {
+    width: 100%;
   }
 
   .task-form {
-    padding: 20px;
+    padding: 21px;
+    border-radius: 18px;
   }
 
   .task-card {
     padding: 20px;
-  }
-
-  .tasks-title h1 {
-    font-size: 32px;
+    border-radius: 18px;
   }
 
   .task-actions {
@@ -1071,4 +1214,38 @@
     width: 100%;
   }
 
+  .tasks-summary {
+    margin-bottom: 13px;
+  }
+
+  .meta-box {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE — TELÉFONOS PEQUEÑOS
+   ============================================================ */
+
+@media (max-width: 380px) {
+  .tasks-title h1 {
+    font-size: 30px;
+  }
+
+  .task-form {
+    padding: 18px;
+  }
+
+  .task-card {
+    padding: 18px;
+  }
+
+  .form-header h2 {
+    font-size: 22px;
+  }
+
+  .task-content h2 {
+    font-size: 18px;
+  }
 }

@@ -1,3 +1,5 @@
+import { CommonModule, DatePipe } from '@angular/common';
+
 import {
   ChangeDetectorRef,
   Component,
@@ -13,6 +15,8 @@ import {
 
 import { Router } from '@angular/router';
 
+import { finalize } from 'rxjs';
+
 import { Task } from '../../../../domain/task/task.model';
 import { TaskService } from '../../../../infrastructure/tasks/task.service';
 
@@ -25,14 +29,26 @@ import { ReminderService } from '../../../../infrastructure/reminders/reminder.s
 
 import { AuthService } from '../../../../core/auth/auth.service';
 
+
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [ReactiveFormsModule],
+
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DatePipe,
+  ],
+
   templateUrl: './task-list.html',
   styleUrl: './task-list.scss',
 })
 export class TaskListComponent implements OnInit {
+
+  // ============================================================
+  // SERVICIOS
+  // ============================================================
+
   private readonly taskService =
     inject(TaskService);
 
@@ -51,6 +67,7 @@ export class TaskListComponent implements OnInit {
   private readonly router =
     inject(Router);
 
+
   // ============================================================
   // TAREAS
   // ============================================================
@@ -58,18 +75,24 @@ export class TaskListComponent implements OnInit {
   tasks: Task[] = [];
 
   loading = false;
+
   error = '';
+
 
   // ============================================================
   // CREAR TAREA
   // ============================================================
 
   showCreateForm = false;
+
   creating = false;
+
   createError = '';
+
 
   readonly taskForm =
     this.formBuilder.nonNullable.group({
+
       title: [
         '',
         [
@@ -78,26 +101,36 @@ export class TaskListComponent implements OnInit {
         ],
       ],
 
-      description: [''],
+      description: [
+        '',
+      ],
 
-      dueDate: [''],
+      dueDate: [
+        '',
+      ],
 
       priority: [
         'MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA',
         Validators.required,
       ],
+
     });
+
 
   // ============================================================
   // EDITAR TAREA
   // ============================================================
 
   editingTaskId: number | null = null;
+
   updating = false;
+
   updateError = '';
+
 
   readonly editForm =
     this.formBuilder.nonNullable.group({
+
       title: [
         '',
         [
@@ -106,21 +139,28 @@ export class TaskListComponent implements OnInit {
         ],
       ],
 
-      description: [''],
+      description: [
+        '',
+      ],
 
-      dueDate: [''],
+      dueDate: [
+        '',
+      ],
 
       priority: [
         'MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA',
         Validators.required,
       ],
+
     });
+
 
   // ============================================================
   // ELIMINAR TAREA
   // ============================================================
 
   deletingTaskId: number | null = null;
+
 
   // ============================================================
   // RECORDATORIOS
@@ -137,10 +177,13 @@ export class TaskListComponent implements OnInit {
   reminderFormTaskId: number | null = null;
 
   creatingReminder = false;
+
   reminderCreateError = '';
+
 
   readonly reminderForm =
     this.formBuilder.nonNullable.group({
+
       scheduledAt: [
         '',
         Validators.required,
@@ -153,13 +196,16 @@ export class TaskListComponent implements OnInit {
           Validators.maxLength(255),
         ],
       ],
+
     });
+
 
   // ============================================================
   // INICIO
   // ============================================================
 
   ngOnInit(): void {
+
     console.log(
       'TaskListComponent iniciado'
     );
@@ -167,11 +213,13 @@ export class TaskListComponent implements OnInit {
     this.loadTasks();
   }
 
+
   // ============================================================
   // CERRAR SESIÓN
   // ============================================================
 
   logout(): void {
+
     console.log(
       'Cerrando sesión...'
     );
@@ -185,129 +233,185 @@ export class TaskListComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
+
   // ============================================================
   // CARGAR TAREAS
   // ============================================================
 
   loadTasks(): void {
+
     console.log(
       'INICIANDO CARGA DE TAREAS'
     );
 
     this.loading = true;
+
     this.error = '';
 
     this.changeDetectorRef.detectChanges();
 
-    this.taskService.getTasks().subscribe({
-      next: (tasks) => {
-        console.log(
-          'RESPUESTA DE TASKS:',
-          tasks
-        );
 
-        if (Array.isArray(tasks)) {
-          this.tasks = tasks;
-        } else {
-          console.warn(
-            'La respuesta de /tasks no es un arreglo:',
+    this.taskService
+      .getTasks()
+
+      .pipe(
+
+        finalize(() => {
+
+          this.loading = false;
+
+          console.log(
+            'LOADING FINAL:',
+            this.loading
+          );
+
+          this.changeDetectorRef.detectChanges();
+
+        })
+
+      )
+
+      .subscribe({
+
+        next: (tasks) => {
+
+          console.log(
+            'RESPUESTA DE TASKS:',
             tasks
           );
 
+
+          if (Array.isArray(tasks)) {
+
+            this.tasks = tasks;
+
+          } else {
+
+            console.warn(
+              'La respuesta de /tasks no es un arreglo:',
+              tasks
+            );
+
+            this.tasks = [];
+
+          }
+
+
+          console.log(
+            'TAREAS CARGADAS:',
+            this.tasks
+          );
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'ERROR REAL CARGANDO TASKS:',
+            error
+          );
+
+          console.error(
+            'STATUS:',
+            error?.status
+          );
+
+          console.error(
+            'ERROR:',
+            error?.error
+          );
+
+
           this.tasks = [];
-        }
 
-        this.loading = false;
+          this.error =
+            'No se pudieron cargar las tareas.';
 
-        console.log(
-          'TAREAS CARGADAS:',
-          this.tasks
-        );
+        },
 
-        console.log(
-          'LOADING FINAL:',
-          this.loading
-        );
-
-        this.changeDetectorRef.detectChanges();
-      },
-
-      error: (error) => {
-        console.error(
-          'ERROR REAL CARGANDO TASKS:',
-          error
-        );
-
-        console.error(
-          'STATUS:',
-          error?.status
-        );
-
-        console.error(
-          'ERROR:',
-          error?.error
-        );
-
-        this.tasks = [];
-
-        this.error =
-          'No se pudieron cargar las tareas.';
-
-        this.loading = false;
-
-        console.log(
-          'LOADING FINAL:',
-          this.loading
-        );
-
-        this.changeDetectorRef.detectChanges();
-      },
-    });
+      });
   }
+
 
   // ============================================================
   // CREAR TAREA
   // ============================================================
 
   openCreateForm(): void {
+
     this.showCreateForm = true;
+
     this.createError = '';
 
     this.taskForm.reset({
+
       title: '',
+
       description: '',
+
       dueDate: '',
+
       priority: 'MEDIA',
+
     });
   }
+
 
   cancelCreate(): void {
+
     this.showCreateForm = false;
+
     this.createError = '';
 
+    this.creating = false;
+
+
     this.taskForm.reset({
+
       title: '',
+
       description: '',
+
       dueDate: '',
+
       priority: 'MEDIA',
+
     });
   }
 
+
   createTask(): void {
+
     if (this.taskForm.invalid) {
+
       this.taskForm.markAllAsTouched();
+
       return;
     }
 
+
     this.creating = true;
+
     this.createError = '';
+
 
     const formValue =
       this.taskForm.getRawValue();
 
+
+    console.log(
+      'CREANDO TAREA:',
+      formValue
+    );
+
+
     this.taskService
+
       .createTask({
-        title: formValue.title,
+
+        title:
+          formValue.title,
 
         description:
           formValue.description || undefined,
@@ -317,225 +421,596 @@ export class TaskListComponent implements OnInit {
 
         priority:
           formValue.priority,
+
       })
+
+      .pipe(
+
+        finalize(() => {
+
+          this.creating = false;
+
+          this.changeDetectorRef.detectChanges();
+
+        })
+
+      )
+
       .subscribe({
+
         next: (task) => {
+
           console.log(
-            'Tarea creada:',
+            'TAREA CREADA:',
             task
           );
+
 
           this.tasks = [
             ...this.tasks,
             task,
           ];
 
-          this.creating = false;
 
           this.cancelCreate();
+
         },
 
+
         error: (error) => {
+
           console.error(
-            'Error creando tarea:',
+            'ERROR CREANDO TAREA:',
             error
           );
+
+          console.error(
+            'STATUS:',
+            error?.status
+          );
+
+          console.error(
+            'ERROR:',
+            error?.error
+          );
+
 
           this.createError =
             'No se pudo crear la tarea.';
 
-          this.creating = false;
         },
+
       });
   }
 
+
   // ============================================================
-  // EDITAR TAREA
+  // ABRIR EDICIÓN
   // ============================================================
 
   openEditForm(task: Task): void {
+
+    console.log(
+      'ABRIENDO EDICIÓN:',
+      task
+    );
+
+
     this.editingTaskId = task.id;
+
     this.updateError = '';
 
+    this.updating = false;
+
+
     this.editForm.reset({
-      title: task.title,
+
+      title:
+        task.title,
 
       description:
         task.description ?? '',
 
       dueDate:
-        task.dueDate ?? '',
+        this.formatDateForInput(
+          task.dueDate
+        ),
 
       priority:
         task.priority,
+
     });
+
+
+    this.changeDetectorRef.detectChanges();
   }
+
+
+  // ============================================================
+  // CANCELAR EDICIÓN
+  // ============================================================
 
   cancelEdit(): void {
+
+    console.log(
+      'CANCELANDO EDICIÓN'
+    );
+
+
     this.editingTaskId = null;
+
     this.updateError = '';
+
+    this.updating = false;
+
+
+    this.editForm.reset({
+
+      title: '',
+
+      description: '',
+
+      dueDate: '',
+
+      priority: 'MEDIA',
+
+    });
+
+
+    this.changeDetectorRef.detectChanges();
   }
 
+
+  // ============================================================
+  // ACTUALIZAR TAREA
+  // ============================================================
+
   updateTask(): void {
-    if (
-      this.editingTaskId === null ||
-      this.editForm.invalid
-    ) {
-      this.editForm.markAllAsTouched();
+
+    console.log(
+      'INICIANDO ACTUALIZACIÓN'
+    );
+
+
+    // ----------------------------------------------------------
+    // VALIDACIONES
+    // ----------------------------------------------------------
+
+    if (this.editingTaskId === null) {
+
+      console.warn(
+        'No existe una tarea en edición.'
+      );
+
       return;
     }
 
+
+    if (this.editForm.invalid) {
+
+      console.warn(
+        'FORMULARIO DE EDICIÓN INVÁLIDO'
+      );
+
+      this.editForm.markAllAsTouched();
+
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // EVITAR DOBLE PETICIÓN
+    // ----------------------------------------------------------
+
+    if (this.updating) {
+
+      console.warn(
+        'Ya existe una actualización en curso.'
+      );
+
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // ESTADO DE CARGA
+    // ----------------------------------------------------------
+
     this.updating = true;
+
     this.updateError = '';
+
 
     const taskId =
       this.editingTaskId;
 
+
     const formValue =
       this.editForm.getRawValue();
 
+
+    // ----------------------------------------------------------
+    // PAYLOAD
+    // ----------------------------------------------------------
+
+    const request = {
+
+      title:
+        formValue.title.trim(),
+
+      description:
+        formValue.description.trim() || undefined,
+
+      dueDate:
+        formValue.dueDate || undefined,
+
+      priority:
+        formValue.priority,
+
+    };
+
+
+    console.log(
+      'TASK ID:',
+      taskId
+    );
+
+    console.log(
+      'PAYLOAD UPDATE:',
+      request
+    );
+
+
+    this.changeDetectorRef.detectChanges();
+
+
+    // ----------------------------------------------------------
+    // PETICIÓN PUT
+    // ----------------------------------------------------------
+
     this.taskService
-      .updateTask(taskId, {
-        title: formValue.title,
 
-        description:
-          formValue.description || undefined,
+      .updateTask(
+        taskId,
+        request
+      )
 
-        dueDate:
-          formValue.dueDate || undefined,
+      .pipe(
 
-        priority:
-          formValue.priority,
-      })
-      .subscribe({
-        next: (updatedTask) => {
+        finalize(() => {
+
           console.log(
-            'Tarea actualizada:',
-            updatedTask
+            'FINALIZÓ PETICIÓN UPDATE'
           );
 
-          this.tasks =
-            this.tasks.map(
-              (task) =>
-                task.id ===
-                updatedTask.id
-                  ? updatedTask
-                  : task
-            );
+
+          /*
+           * MUY IMPORTANTE:
+           *
+           * Aunque el backend responda con error,
+           * el botón NO debe quedarse en
+           * "Guardando..."
+           */
 
           this.updating = false;
 
-          this.cancelEdit();
+
+          this.changeDetectorRef.detectChanges();
+
+        })
+
+      )
+
+      .subscribe({
+
+        // ------------------------------------------------------
+        // ÉXITO
+        // ------------------------------------------------------
+
+        next: (updatedTask) => {
+
+          console.log(
+            'TAREA ACTUALIZADA CORRECTAMENTE:',
+            updatedTask
+          );
+
+
+          // ----------------------------------------------------
+          // ACTUALIZAR LA TAREA EN MEMORIA
+          // ----------------------------------------------------
+
+          this.tasks =
+            this.tasks.map(
+              (task) => {
+
+                if (
+                  task.id === updatedTask.id
+                ) {
+
+                  return updatedTask;
+
+                }
+
+                return task;
+
+              }
+            );
+
+
+          console.log(
+            'LISTA DESPUÉS DE ACTUALIZAR:',
+            this.tasks
+          );
+
+
+          // ----------------------------------------------------
+          // CERRAR FORMULARIO
+          // ----------------------------------------------------
+
+          this.editingTaskId = null;
+
+          this.updateError = '';
+
+
+          this.editForm.reset({
+
+            title: '',
+
+            description: '',
+
+            dueDate: '',
+
+            priority: 'MEDIA',
+
+          });
+
+
+          this.changeDetectorRef.detectChanges();
+
         },
 
+
+        // ------------------------------------------------------
+        // ERROR
+        // ------------------------------------------------------
+
         error: (error) => {
+
           console.error(
-            'Error actualizando tarea:',
+            'ERROR ACTUALIZANDO TAREA:',
             error
           );
+
+
+          console.error(
+            'STATUS:',
+            error?.status
+          );
+
+
+          console.error(
+            'ERROR BODY:',
+            error?.error
+          );
+
+
+          console.error(
+            'ERROR MESSAGE:',
+            error?.message
+          );
+
 
           this.updateError =
             'No se pudo actualizar la tarea.';
 
-          this.updating = false;
         },
+
       });
   }
+
+
+  // ============================================================
+  // FORMATEAR FECHA PARA DATETIME-LOCAL
+  // ============================================================
+
+  private formatDateForInput(
+    dateValue: string | null | undefined
+  ): string {
+
+    if (!dateValue) {
+
+      return '';
+    }
+
+
+    /*
+     * El backend devuelve algo como:
+     *
+     * 2026-10-25T00:33:00
+     *
+     * datetime-local necesita:
+     *
+     * 2026-10-25T00:33
+     */
+
+
+    if (
+      dateValue.length >= 16
+    ) {
+
+      return dateValue.substring(
+        0,
+        16
+      );
+
+    }
+
+
+    return dateValue;
+  }
+
 
   // ============================================================
   // COMPLETAR TAREA
   // ============================================================
 
   completeTask(task: Task): void {
+
     if (
       task.status === 'COMPLETADA'
     ) {
+
       return;
     }
 
+
+    console.log(
+      'COMPLETANDO TAREA:',
+      task.id
+    );
+
+
     this.taskService
+
       .updateTaskStatus(
+
         task.id,
+
         {
           status: 'COMPLETADA',
         }
+
       )
+
       .subscribe({
+
         next: (updatedTask) => {
+
           console.log(
-            'Tarea completada:',
+            'TAREA COMPLETADA:',
             updatedTask
           );
 
+
           this.tasks =
             this.tasks.map(
+
               (currentTask) =>
+
                 currentTask.id ===
                 updatedTask.id
+
                   ? updatedTask
+
                   : currentTask
+
             );
+
+
+          this.changeDetectorRef.detectChanges();
+
         },
 
+
         error: (error) => {
+
           console.error(
-            'Error completando tarea:',
+            'ERROR COMPLETANDO TAREA:',
             error
           );
+
         },
+
       });
   }
+
 
   // ============================================================
   // ELIMINAR TAREA
   // ============================================================
 
   deleteTask(task: Task): void {
+
     const confirmed =
       window.confirm(
         `¿Seguro que deseas eliminar la tarea "${task.title}"?`
       );
 
+
     if (!confirmed) {
+
       return;
     }
+
+
+    console.log(
+      'ELIMINANDO TAREA:',
+      task.id
+    );
+
 
     this.deletingTaskId =
       task.id;
 
+
     this.taskService
-      .deleteTask(task.id)
+
+      .deleteTask(
+        task.id
+      )
+
+      .pipe(
+
+        finalize(() => {
+
+          this.deletingTaskId = null;
+
+          this.changeDetectorRef.detectChanges();
+
+        })
+
+      )
+
       .subscribe({
+
         next: () => {
+
           console.log(
-            'Tarea eliminada:',
+            'TAREA ELIMINADA:',
             task.id
           );
 
+
           this.tasks =
             this.tasks.filter(
+
               (currentTask) =>
+
                 currentTask.id !==
                 task.id
+
             );
+
 
           delete this.reminders[
             task.id
           ];
 
-          this.deletingTaskId = null;
         },
 
+
         error: (error) => {
+
           console.error(
-            'Error eliminando tarea:',
+            'ERROR ELIMINANDO TAREA:',
             error
           );
 
-          this.deletingTaskId = null;
         },
+
       });
   }
+
 
   // ============================================================
   // MOSTRAR / OCULTAR RECORDATORIOS
@@ -544,19 +1019,28 @@ export class TaskListComponent implements OnInit {
   toggleReminders(
     taskId: number
   ): void {
+
     if (
       this.expandedTaskId === taskId
     ) {
+
       this.expandedTaskId = null;
+
       this.reminderFormTaskId = null;
 
       return;
     }
 
-    this.expandedTaskId = taskId;
 
-    this.loadReminders(taskId);
+    this.expandedTaskId =
+      taskId;
+
+
+    this.loadReminders(
+      taskId
+    );
   }
+
 
   // ============================================================
   // CARGAR RECORDATORIOS
@@ -565,173 +1049,280 @@ export class TaskListComponent implements OnInit {
   loadReminders(
     taskId: number
   ): void {
+
     this.remindersLoading[
       taskId
     ] = true;
+
 
     this.reminderError[
       taskId
     ] = '';
 
+
     this.reminderService
-      .getReminders(taskId)
+
+      .getReminders(
+        taskId
+      )
+
+      .pipe(
+
+        finalize(() => {
+
+          this.remindersLoading[
+            taskId
+          ] = false;
+
+
+          this.changeDetectorRef.detectChanges();
+
+        })
+
+      )
+
       .subscribe({
+
         next: (reminders) => {
+
           console.log(
             'RECORDATORIOS DE TAREA:',
             taskId,
             reminders
           );
 
+
           this.reminders[
             taskId
           ] = Array.isArray(reminders)
+
             ? reminders
+
             : [];
 
-          this.remindersLoading[
-            taskId
-          ] = false;
         },
 
+
         error: (error) => {
+
           console.error(
-            'Error cargando recordatorios:',
+            'ERROR CARGANDO RECORDATORIOS:',
             error
           );
+
 
           this.reminders[
             taskId
           ] = [];
+
 
           this.reminderError[
             taskId
           ] =
             'No se pudieron cargar los recordatorios.';
 
-          this.remindersLoading[
-            taskId
-          ] = false;
         },
+
       });
   }
 
+
   // ============================================================
-  // ABRIR FORMULARIO DE RECORDATORIO
+  // ABRIR FORMULARIO RECORDATORIO
   // ============================================================
 
   openReminderForm(
     taskId: number
   ): void {
+
     this.reminderFormTaskId =
       taskId;
 
-    this.reminderCreateError = '';
+
+    this.reminderCreateError =
+      '';
+
+
+    this.creatingReminder =
+      false;
+
 
     this.reminderForm.reset({
+
       scheduledAt: '',
+
       message: '',
+
     });
   }
 
+
   // ============================================================
-  // CERRAR FORMULARIO DE RECORDATORIO
+  // CERRAR FORMULARIO RECORDATORIO
   // ============================================================
 
   cancelReminderForm(): void {
+
     this.reminderFormTaskId =
       null;
 
-    this.reminderCreateError = '';
+
+    this.reminderCreateError =
+      '';
+
+
+    this.creatingReminder =
+      false;
+
 
     this.reminderForm.reset({
+
       scheduledAt: '',
+
       message: '',
+
     });
   }
+
 
   // ============================================================
   // CREAR RECORDATORIO
   // ============================================================
 
   createReminder(): void {
+
     if (
       this.reminderFormTaskId ===
         null ||
       this.reminderForm.invalid
     ) {
+
       this.reminderForm.markAllAsTouched();
+
       return;
     }
 
-    this.creatingReminder = true;
-    this.reminderCreateError = '';
+
+    if (this.creatingReminder) {
+
+      return;
+    }
+
+
+    this.creatingReminder =
+      true;
+
+
+    this.reminderCreateError =
+      '';
+
 
     const taskId =
       this.reminderFormTaskId;
 
+
     const formValue =
       this.reminderForm.getRawValue();
 
+
     const request: ReminderRequest = {
+
       scheduledAt:
         formValue.scheduledAt,
 
       message:
         formValue.message,
+
     };
 
+
+    console.log(
+      'CREANDO RECORDATORIO:',
+      request
+    );
+
+
     this.reminderService
+
       .createReminder(
+
         taskId,
+
         request
+
       )
+
+      .pipe(
+
+        finalize(() => {
+
+          this.creatingReminder =
+            false;
+
+
+          this.changeDetectorRef.detectChanges();
+
+        })
+
+      )
+
       .subscribe({
+
         next: (reminder) => {
+
           console.log(
-            'Recordatorio creado:',
+            'RECORDATORIO CREADO:',
             reminder
           );
+
 
           if (
             !this.reminders[
               taskId
             ]
           ) {
+
             this.reminders[
               taskId
             ] = [];
+
           }
+
 
           this.reminders[
             taskId
           ] = [
+
             ...this.reminders[
               taskId
             ],
+
             reminder,
+
           ];
 
-          this.creatingReminder =
-            false;
 
           this.cancelReminderForm();
+
         },
 
+
         error: (error) => {
+
           console.error(
-            'Error creando recordatorio:',
+            'ERROR CREANDO RECORDATORIO:',
             error
           );
+
 
           this.reminderCreateError =
             'No se pudo crear el recordatorio.';
 
-          this.creatingReminder =
-            false;
         },
+
       });
   }
+
 
   // ============================================================
   // ELIMINAR RECORDATORIO
@@ -741,45 +1332,74 @@ export class TaskListComponent implements OnInit {
     reminderId: number,
     taskId: number
   ): void {
+
     const confirmed =
       window.confirm(
         '¿Seguro que deseas eliminar este recordatorio?'
       );
 
+
     if (!confirmed) {
+
       return;
     }
 
+
+    console.log(
+      'ELIMINANDO RECORDATORIO:',
+      reminderId
+    );
+
+
     this.reminderService
+
       .deleteReminder(
         reminderId
       )
+
       .subscribe({
+
         next: () => {
+
           console.log(
-            'Recordatorio eliminado:',
+            'RECORDATORIO ELIMINADO:',
             reminderId
           );
+
 
           this.reminders[
             taskId
           ] = (
+
             this.reminders[
               taskId
             ] ?? []
+
           ).filter(
+
             (reminder) =>
+
               reminder.id !==
               reminderId
+
           );
+
+
+          this.changeDetectorRef.detectChanges();
+
         },
 
+
         error: (error) => {
+
           console.error(
-            'Error eliminando recordatorio:',
+            'ERROR ELIMINANDO RECORDATORIO:',
             error
           );
+
         },
+
       });
   }
+
 }
