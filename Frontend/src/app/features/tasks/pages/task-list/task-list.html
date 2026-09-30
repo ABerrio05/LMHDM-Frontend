@@ -1,0 +1,1006 @@
+<div class="tasks-page">
+
+  @if (toast) {
+    <aside
+      class="toast"
+      [class.toast-error]="toast.kind === 'error'"
+      aria-live="polite"
+    >
+      <span class="toast-icon">{{ toast.kind === 'success' ? '✓' : '!' }}</span>
+      <p>{{ toast.text }}</p>
+      <button type="button" aria-label="Cerrar notificación" (click)="dismissToast()">×</button>
+    </aside>
+  }
+
+  <!-- ============================================================
+       ENCABEZADO
+       ============================================================ -->
+
+  <header class="tasks-header">
+
+    <div class="tasks-title">
+      <span class="brand-name">NEXO</span>
+
+      <h1>Mis tareas</h1>
+
+      <p>
+        Organiza lo que tienes pendiente y mantén todo bajo control.
+      </p>
+    </div>
+
+    <div class="header-actions">
+
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()"
+      >
+        <span class="button-icon">↪</span>
+        Cerrar sesión
+      </button>
+
+      <button
+        type="button"
+        class="new-task-button"
+        (click)="openCreateForm()"
+      >
+        + Nueva tarea
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- ============================================================
+       FORMULARIO CREAR TAREA
+       ============================================================ -->
+
+  @if (showCreateForm) {
+
+    <section class="task-form create-task-form">
+
+      <div class="form-header">
+
+        <span class="form-eyebrow">
+          NUEVA TAREA
+        </span>
+
+        <h2>
+          Crear tarea
+        </h2>
+
+        <p>
+          Registra una nueva tarea para organizar tus actividades.
+        </p>
+
+      </div>
+
+
+      <form
+        [formGroup]="taskForm"
+        (ngSubmit)="createTask()"
+      >
+
+        <div class="form-grid">
+
+          <!-- TÍTULO -->
+          <div class="form-field form-field-full">
+
+            <label for="create-title">
+              Título
+            </label>
+
+            <input
+              id="create-title"
+              type="text"
+              formControlName="title"
+              placeholder="Ej. Terminar proyecto"
+            />
+
+            @if (
+              taskForm.controls.title.touched &&
+              taskForm.controls.title.invalid
+            ) {
+
+              <span class="field-error">
+                El título es obligatorio y debe tener máximo 150 caracteres.
+              </span>
+
+            }
+
+          </div>
+
+
+          <!-- DESCRIPCIÓN -->
+          <div class="form-field form-field-full">
+
+            <label for="create-description">
+              Descripción
+            </label>
+
+            <textarea
+              id="create-description"
+              formControlName="description"
+              placeholder="Describe brevemente la tarea..."
+            ></textarea>
+
+          </div>
+
+
+          <!-- FECHA -->
+          <div class="form-field">
+
+            <label for="create-due-date">
+              Fecha límite
+            </label>
+
+            <input
+              id="create-due-date"
+              type="datetime-local"
+              formControlName="dueDate"
+            />
+
+          </div>
+
+
+          <!-- PRIORIDAD -->
+          <div class="form-field">
+
+            <label for="create-priority">
+              Prioridad
+            </label>
+
+            <select
+              id="create-priority"
+              formControlName="priority"
+            >
+
+              <option value="ALTA">
+                Alta
+              </option>
+
+              <option value="MEDIA">
+                Media
+              </option>
+
+              <option value="BAJA">
+                Baja
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- ERROR CREACIÓN -->
+
+        @if (createError) {
+
+          <div class="message error">
+            {{ createError }}
+          </div>
+
+        }
+
+
+        <!-- ACCIONES -->
+
+        <div class="form-actions">
+
+          <button
+            type="submit"
+            class="primary-action"
+            [disabled]="creating"
+          >
+
+            @if (creating) {
+              Creando...
+            } @else {
+              Crear tarea
+            }
+
+          </button>
+
+
+          <button
+            type="button"
+            class="secondary-action"
+            [disabled]="creating"
+            (click)="cancelCreate()"
+          >
+            Cancelar
+          </button>
+
+        </div>
+
+      </form>
+
+    </section>
+
+  }
+
+
+  <!-- ============================================================
+       ESTADO DE CARGA
+       ============================================================ -->
+
+  @if (loading) {
+
+    <section class="state-card">
+
+      <div class="spinner"></div>
+
+      <h2>
+        Cargando tareas
+      </h2>
+
+      <p>
+        Estamos obteniendo tus tareas...
+      </p>
+
+    </section>
+
+  }
+
+
+  <!-- ============================================================
+       ERROR GENERAL
+       ============================================================ -->
+
+  @else if (error) {
+
+    <section class="state-card">
+
+      <div class="state-icon">
+        !
+      </div>
+
+      <h2>
+        No pudimos cargar tus tareas
+      </h2>
+
+      <p>
+        {{ error }}
+      </p>
+
+      <button
+        type="button"
+        class="primary-action"
+        (click)="loadTasks()"
+      >
+        Intentar nuevamente
+      </button>
+
+    </section>
+
+  }
+
+
+  <!-- ============================================================
+       ESTADO SIN TAREAS
+       ============================================================ -->
+
+  @else if (tasks.length === 0) {
+
+    <section class="state-card empty-state">
+
+      <div class="empty-icon">
+        ✓
+      </div>
+
+      <span class="form-eyebrow">
+        TODO LISTO
+      </span>
+
+      <h2>
+        No tienes tareas
+      </h2>
+
+      <p>
+        Crea tu primera tarea para comenzar a organizarte.
+      </p>
+
+      <button
+        type="button"
+        class="primary-action"
+        (click)="openCreateForm()"
+      >
+        + Crear primera tarea
+      </button>
+
+    </section>
+
+  }
+
+
+  <!-- ============================================================
+       LISTADO DE TAREAS
+       ============================================================ -->
+
+  @else {
+
+    <section class="dashboard" aria-label="Resumen de tareas">
+      <div class="dashboard-heading">
+        <div>
+          <span class="summary-label">RESUMEN</span>
+          <h2>Tu progreso de hoy</h2>
+        </div>
+        <strong class="completion-rate">{{ completionPercentage }}% completado</strong>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="metric-card metric-total">
+          <span>Total</span>
+          <strong>{{ tasks.length }}</strong>
+          <small>{{ tasks.length === 1 ? 'tarea registrada' : 'tareas registradas' }}</small>
+        </article>
+        <article class="metric-card metric-pending">
+          <span>Pendientes</span>
+          <strong>{{ pendingTaskCount }}</strong>
+          <small>por avanzar</small>
+        </article>
+        <article class="metric-card metric-completed">
+          <span>Completadas</span>
+          <strong>{{ completedTaskCount }}</strong>
+          <small>objetivos logrados</small>
+        </article>
+        <article class="metric-card metric-priority">
+          <span>Prioridad alta</span>
+          <strong>{{ highPriorityTaskCount }}</strong>
+          <small>requieren atención</small>
+        </article>
+      </div>
+
+      <div class="dashboard-details">
+        <div class="priority-distribution">
+          <span>Distribución por prioridad</span>
+          <div class="priority-pills">
+            <span class="priority-pill high">Alta {{ priorityTaskCount('ALTA') }}</span>
+            <span class="priority-pill medium">Media {{ priorityTaskCount('MEDIA') }}</span>
+            <span class="priority-pill low">Baja {{ priorityTaskCount('BAJA') }}</span>
+          </div>
+        </div>
+
+        <div class="upcoming-tasks">
+          <span>Próximas a vencer</span>
+          @if (upcomingTasks.length > 0) {
+            <ul>
+              @for (task of upcomingTasks; track task.id) {
+                <li>
+                  <strong>{{ task.title }}</strong>
+                  <time>{{ task.dueDate | date:'dd MMM, HH:mm' }}</time>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p>No hay fechas límite próximas.</p>
+          }
+        </div>
+      </div>
+    </section>
+
+
+    <section class="tasks-list">
+
+      @for (task of tasks; track task.id) {
+
+        <article
+          class="task-card"
+          [class.completed]="task.status === 'COMPLETADA'"
+        >
+
+          <!-- ====================================================
+               CABECERA TARJETA
+               ==================================================== -->
+
+          <div class="task-card-header">
+
+            <span class="task-number">
+              TAREA #{{ task.id }}
+            </span>
+
+
+            @if (task.status === 'COMPLETADA') {
+
+              <span class="status-badge completed-status">
+                Completada
+              </span>
+
+            } @else {
+
+              <span class="status-badge pending-status">
+                Pendiente
+              </span>
+
+            }
+
+          </div>
+
+
+          <!-- ====================================================
+               CONTENIDO
+               ==================================================== -->
+
+          <div class="task-content">
+
+            <h2>
+              {{ task.title }}
+            </h2>
+
+
+            @if (task.description) {
+
+              <p class="task-description">
+                {{ task.description }}
+              </p>
+
+            }
+
+
+            <!-- ==================================================
+                 METADATOS
+                 ================================================== -->
+
+            <div class="task-meta">
+
+              @if (task.dueDate) {
+
+                <div class="meta-box">
+
+                  <span>
+                    FECHA LÍMITE
+                  </span>
+
+                  <strong>
+                    {{ task.dueDate | date:'yyyy-MM-dd HH:mm' }}
+                  </strong>
+
+                </div>
+
+              }
+
+
+              <div class="meta-box">
+
+                <span>
+                  PRIORIDAD
+                </span>
+
+                <strong
+                  [class.priority-high]="task.priority === 'ALTA'"
+                  [class.priority-medium]="task.priority === 'MEDIA'"
+                  [class.priority-low]="task.priority === 'BAJA'"
+                >
+                  {{ task.priority }}
+                </strong>
+
+              </div>
+
+
+              <div class="meta-box">
+
+                <span>
+                  ESTADO
+                </span>
+
+                <strong>
+                  {{ task.status }}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ====================================================
+               ACCIONES DE TAREA
+               ==================================================== -->
+
+          <div class="task-actions">
+
+            @if (task.status !== 'COMPLETADA') {
+
+              <button
+                type="button"
+                class="action-button complete-button"
+                (click)="completeTask(task)"
+              >
+                ✓ Completar
+              </button>
+
+            }
+
+
+            <button
+              type="button"
+              class="action-button edit-button"
+              [disabled]="updating"
+              (click)="openEditForm(task)"
+            >
+              ✎ Editar
+            </button>
+
+
+            <button
+              type="button"
+              class="action-button delete-button"
+              [disabled]="deletingTaskId === task.id"
+              (click)="deleteTask(task)"
+            >
+
+              @if (deletingTaskId === task.id) {
+                Eliminando...
+              } @else {
+                🗑 Eliminar
+              }
+
+            </button>
+
+
+            <button
+              type="button"
+              class="action-button reminder-button"
+              (click)="toggleReminders(task.id)"
+            >
+
+              @if (expandedTaskId === task.id) {
+                Ocultar recordatorios
+              } @else {
+                ⏰ Recordatorios
+              }
+
+            </button>
+
+          </div>
+
+
+          <!-- ====================================================
+               FORMULARIO EDITAR
+               ==================================================== -->
+
+          @if (editingTaskId === task.id) {
+
+            <section class="task-form edit-task-form">
+
+              <div class="form-header">
+
+                <span class="form-eyebrow">
+                  EDITAR
+                </span>
+
+                <h3>
+                  Editar tarea
+                </h3>
+
+                <p>
+                  Modifica los datos de la tarea y guarda los cambios.
+                </p>
+
+              </div>
+
+
+              <form
+                [formGroup]="editForm"
+                (ngSubmit)="updateTask()"
+              >
+
+                <div class="form-grid">
+
+                  <!-- TÍTULO -->
+
+                  <div class="form-field form-field-full">
+
+                    <label
+                      [for]="'edit-title-' + task.id"
+                    >
+                      Título
+                    </label>
+
+                    <input
+                      [id]="'edit-title-' + task.id"
+                      type="text"
+                      formControlName="title"
+                      placeholder="Título de la tarea"
+                    />
+
+                    @if (
+                      editForm.controls.title.touched &&
+                      editForm.controls.title.invalid
+                    ) {
+
+                      <span class="field-error">
+                        El título es obligatorio y debe tener máximo 150 caracteres.
+                      </span>
+
+                    }
+
+                  </div>
+
+
+                  <!-- DESCRIPCIÓN -->
+
+                  <div class="form-field form-field-full">
+
+                    <label
+                      [for]="'edit-description-' + task.id"
+                    >
+                      Descripción
+                    </label>
+
+                    <textarea
+                      [id]="'edit-description-' + task.id"
+                      formControlName="description"
+                      placeholder="Descripción de la tarea"
+                    ></textarea>
+
+                  </div>
+
+
+                  <!-- FECHA -->
+
+                  <div class="form-field">
+
+                    <label
+                      [for]="'edit-due-date-' + task.id"
+                    >
+                      Fecha límite
+                    </label>
+
+                    <input
+                      [id]="'edit-due-date-' + task.id"
+                      type="datetime-local"
+                      formControlName="dueDate"
+                    />
+
+                  </div>
+
+
+                  <!-- PRIORIDAD -->
+
+                  <div class="form-field">
+
+                    <label
+                      [for]="'edit-priority-' + task.id"
+                    >
+                      Prioridad
+                    </label>
+
+                    <select
+                      [id]="'edit-priority-' + task.id"
+                      formControlName="priority"
+                    >
+
+                      <option value="ALTA">
+                        Alta
+                      </option>
+
+                      <option value="MEDIA">
+                        Media
+                      </option>
+
+                      <option value="BAJA">
+                        Baja
+                      </option>
+
+                    </select>
+
+                  </div>
+
+                </div>
+
+
+                <!-- ERROR ACTUALIZACIÓN -->
+
+                @if (updateError) {
+
+                  <div class="message error">
+                    {{ updateError }}
+                  </div>
+
+                }
+
+
+                <!-- ACCIONES EDITAR -->
+
+                <div class="form-actions">
+
+                  <button
+                    type="submit"
+                    class="primary-action"
+                    [disabled]="updating"
+                  >
+
+                    @if (updating) {
+                      Guardando...
+                    } @else {
+                      Guardar cambios
+                    }
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    [disabled]="updating"
+                    (click)="cancelEdit()"
+                  >
+                    Cancelar
+                  </button>
+
+                </div>
+
+              </form>
+
+            </section>
+
+          }
+
+
+          <!-- ====================================================
+               RECORDATORIOS
+               ==================================================== -->
+
+          @if (expandedTaskId === task.id) {
+
+            <section class="reminders-section">
+
+              <div class="reminders-header">
+
+                <h3>
+                  Recordatorios
+                </h3>
+
+                <button
+                  type="button"
+                  class="reminder-add-button"
+                  (click)="openReminderForm(task.id)"
+                >
+                  + Agregar
+                </button>
+
+              </div>
+
+
+              <!-- CARGANDO RECORDATORIOS -->
+
+              @if (remindersLoading[task.id]) {
+
+                <div class="reminder-loading">
+                  Cargando recordatorios...
+                </div>
+
+              }
+
+
+              <!-- ERROR RECORDATORIOS -->
+
+              @else if (reminderError[task.id]) {
+
+                <div class="message error">
+                  {{ reminderError[task.id] }}
+                </div>
+
+              }
+
+
+              <!-- SIN RECORDATORIOS -->
+
+              @else if (
+                !reminders[task.id] ||
+                reminders[task.id].length === 0
+              ) {
+
+                <div class="no-reminders">
+                  Esta tarea no tiene recordatorios.
+                </div>
+
+              }
+
+
+              <!-- LISTA RECORDATORIOS -->
+
+              @else {
+
+                <div class="reminders-list">
+
+                  @for (
+                    reminder of reminders[task.id];
+                    track reminder.id
+                  ) {
+
+                    <div class="reminder-card">
+
+                      <div class="reminder-info">
+
+                        <span>
+                          FECHA
+                        </span>
+
+                        <strong>
+                          {{ reminder.scheduledAt }}
+                        </strong>
+
+                      </div>
+
+
+                      <div class="reminder-info">
+
+                        <span>
+                          MENSAJE
+                        </span>
+
+                        <strong>
+                          {{ reminder.message }}
+                        </strong>
+
+                      </div>
+
+
+                      <button
+                        type="button"
+                        class="reminder-delete-button"
+                        (click)="deleteReminder(reminder.id, task.id)"
+                      >
+                        Eliminar
+                      </button>
+
+                    </div>
+
+                  }
+
+                </div>
+
+              }
+
+
+              <!-- ==================================================
+                   FORMULARIO RECORDATORIO
+                   ================================================== -->
+
+              @if (reminderFormTaskId === task.id) {
+
+                <form
+                  class="reminder-form"
+                  [formGroup]="reminderForm"
+                  (ngSubmit)="createReminder()"
+                >
+
+                  <div class="form-grid">
+
+                    <div class="form-field">
+
+                      <label
+                        [for]="'reminder-date-' + task.id"
+                      >
+                        Fecha y hora
+                      </label>
+
+                      <input
+                        [id]="'reminder-date-' + task.id"
+                        type="datetime-local"
+                        formControlName="scheduledAt"
+                      />
+
+                      @if (
+                        reminderForm.controls.scheduledAt.touched &&
+                        reminderForm.controls.scheduledAt.invalid
+                      ) {
+
+                        <span class="field-error">
+                          La fecha y hora son obligatorias.
+                        </span>
+
+                      }
+
+                    </div>
+
+
+                    <div class="form-field">
+
+                      <label
+                        [for]="'reminder-message-' + task.id"
+                      >
+                        Mensaje
+                      </label>
+
+                      <input
+                        [id]="'reminder-message-' + task.id"
+                        type="text"
+                        formControlName="message"
+                        placeholder="Ej. Revisar esta tarea"
+                      />
+
+                      @if (
+                        reminderForm.controls.message.touched &&
+                        reminderForm.controls.message.invalid
+                      ) {
+
+                        <span class="field-error">
+                          El mensaje es obligatorio.
+                        </span>
+
+                      }
+
+                    </div>
+
+                  </div>
+
+
+                  @if (reminderCreateError) {
+
+                    <div class="message error">
+                      {{ reminderCreateError }}
+                    </div>
+
+                  }
+
+
+                  <div class="form-actions">
+
+                    <button
+                      type="submit"
+                      class="primary-action"
+                      [disabled]="creatingReminder"
+                    >
+
+                      @if (creatingReminder) {
+                        Creando...
+                      } @else {
+                        Crear recordatorio
+                      }
+
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="secondary-action"
+                      [disabled]="creatingReminder"
+                      (click)="cancelReminderForm()"
+                    >
+                      Cancelar
+                    </button>
+
+                  </div>
+
+                </form>
+
+              }
+
+            </section>
+
+          }
+
+        </article>
+
+      }
+
+    </section>
+
+  }
+
+  @if (confirmationAction) {
+    <div class="confirmation-backdrop" role="presentation">
+      <section class="confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-title">
+        <span class="confirmation-icon">!</span>
+        <h2 id="confirmation-title">{{ confirmationTitle }}</h2>
+        <p>{{ confirmationMessage }}</p>
+        <div class="confirmation-actions">
+          <button type="button" class="secondary-action" (click)="cancelConfirmation()">
+            Cancelar
+          </button>
+          <button type="button" class="danger-action" (click)="confirmAction()">
+            Eliminar
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+
+</div>
