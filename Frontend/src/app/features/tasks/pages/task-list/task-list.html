@@ -30,6 +30,18 @@
 
     <div class="header-actions">
 
+      <a class="logout-button" routerLink="/spaces">
+        Espacios
+      </a>
+
+      <a class="logout-button" routerLink="/planning">
+        Planificación
+      </a>
+
+      <a class="logout-button" routerLink="/notes">
+        Notas
+      </a>
+
       <button
         type="button"
         class="logout-button"
@@ -169,6 +181,34 @@
               </option>
 
             </select>
+
+          </div>
+
+
+          <div class="form-field form-field-full">
+
+            <label for="create-space">
+              Espacio colaborativo
+            </label>
+
+            <select
+              id="create-space"
+              formControlName="spaceId"
+            >
+              <option value="">
+                Tarea personal (sin espacio)
+              </option>
+
+              @for (space of collaborativeSpaces; track space.id) {
+                <option [value]="space.id">
+                  {{ space.name }}
+                </option>
+              }
+            </select>
+
+            <small class="field-help">
+              Selecciona un espacio si la tarea debe ser compartida con sus integrantes.
+            </small>
 
           </div>
 

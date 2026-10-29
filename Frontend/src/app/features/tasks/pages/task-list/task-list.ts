@@ -1,4 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import {
   ChangeDetectorRef,
@@ -13,7 +14,7 @@ import {
   Validators,
 } from '@angular/forms';
 
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { finalize } from 'rxjs';
 
@@ -26,6 +27,8 @@ import {
 } from '../../../../domain/reminder/reminder.model';
 
 import { ReminderService } from '../../../../infrastructure/reminders/reminder.service';
+import { CollaborativeSpace } from '../../../../domain/collaboration/collaborative-space.model';
+import { CollaborativeSpaceService } from '../../../../infrastructure/collaboration/collaborative-space.service';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 
@@ -45,6 +48,7 @@ interface ToastMessage {
     CommonModule,
     ReactiveFormsModule,
     DatePipe,
+    RouterLink,
   ],
 
   templateUrl: './task-list.html',
@@ -61,6 +65,9 @@ export class TaskListComponent implements OnInit {
 
   private readonly reminderService =
     inject(ReminderService);
+
+  private readonly collaborativeSpaceService =
+    inject(CollaborativeSpaceService);
 
   private readonly formBuilder =
     inject(FormBuilder);
@@ -80,6 +87,8 @@ export class TaskListComponent implements OnInit {
   // ============================================================
 
   tasks: Task[] = [];
+
+  collaborativeSpaces: CollaborativeSpace[] = [];
 
   loading = false;
 
@@ -127,6 +136,10 @@ export class TaskListComponent implements OnInit {
       priority: [
         'MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA',
         Validators.required,
+      ],
+
+      spaceId: [
+        '',
       ],
 
     });
@@ -221,11 +234,9 @@ export class TaskListComponent implements OnInit {
 
   ngOnInit(): void {
 
-    console.log(
-      'TaskListComponent iniciado'
-    );
-
     this.loadTasks();
+
+    this.loadCollaborativeSpaces();
   }
 
   get pendingTaskCount(): number {
@@ -275,15 +286,7 @@ export class TaskListComponent implements OnInit {
 
   logout(): void {
 
-    console.log(
-      'Cerrando sesión...'
-    );
-
     this.authService.logout();
-
-    console.log(
-      'Token eliminado.'
-    );
 
     this.router.navigate(['/login']);
   }
@@ -326,8 +329,8 @@ export class TaskListComponent implements OnInit {
     this.confirmationAction = action;
   }
 
-  private getRequestError(error: any, fallback: string): string {
-    const response = error?.error;
+  private getRequestError(error: unknown, fallback: string): string {
+    const response = error instanceof HttpErrorResponse ? error.error : undefined;
 
     if (response?.errors && typeof response.errors === 'object') {
       const details = Object.values(response.errors).filter(
@@ -349,10 +352,6 @@ export class TaskListComponent implements OnInit {
 
   loadTasks(): void {
 
-    console.log(
-      'INICIANDO CARGA DE TAREAS'
-    );
-
     this.loading = true;
 
     this.error = '';
@@ -369,11 +368,6 @@ export class TaskListComponent implements OnInit {
 
           this.loading = false;
 
-          console.log(
-            'LOADING FINAL:',
-            this.loading
-          );
-
           this.changeDetectorRef.detectChanges();
 
         })
@@ -384,11 +378,6 @@ export class TaskListComponent implements OnInit {
 
         next: (tasks) => {
 
-          console.log(
-            'RESPUESTA DE TASKS:',
-            tasks
-          );
-
 
           if (Array.isArray(tasks)) {
 
@@ -396,40 +385,14 @@ export class TaskListComponent implements OnInit {
 
           } else {
 
-            console.warn(
-              'La respuesta de /tasks no es un arreglo:',
-              tasks
-            );
-
             this.tasks = [];
 
           }
-
-
-          console.log(
-            'TAREAS CARGADAS:',
-            this.tasks
-          );
 
         },
 
 
         error: (error) => {
-
-          console.error(
-            'ERROR REAL CARGANDO TASKS:',
-            error
-          );
-
-          console.error(
-            'STATUS:',
-            error?.status
-          );
-
-          console.error(
-            'ERROR:',
-            error?.error
-          );
 
 
           this.tasks = [];
@@ -440,6 +403,18 @@ export class TaskListComponent implements OnInit {
         },
 
       });
+  }
+
+  private loadCollaborativeSpaces(): void {
+    this.collaborativeSpaceService.listMine().subscribe({
+      next: (spaces) => {
+        this.collaborativeSpaces = Array.isArray(spaces) ? spaces : [];
+      },
+      error: () => {
+        // La creación de tareas personales debe seguir disponible si espacios no responde.
+        this.collaborativeSpaces = [];
+      },
+    });
   }
 
 
@@ -462,6 +437,8 @@ export class TaskListComponent implements OnInit {
       dueDate: '',
 
       priority: 'MEDIA',
+
+      spaceId: '',
 
     });
   }
@@ -509,12 +486,6 @@ export class TaskListComponent implements OnInit {
       this.taskForm.getRawValue();
 
 
-    console.log(
-      'CREANDO TAREA:',
-      formValue
-    );
-
-
     this.taskService
 
       .createTask({
@@ -530,6 +501,9 @@ export class TaskListComponent implements OnInit {
 
         priority:
           formValue.priority,
+
+        spaceId:
+          formValue.spaceId ? Number(formValue.spaceId) : undefined,
 
       })
 
@@ -549,11 +523,6 @@ export class TaskListComponent implements OnInit {
 
         next: (task) => {
 
-          console.log(
-            'TAREA CREADA:',
-            task
-          );
-
 
           this.tasks = [
             ...this.tasks,
@@ -569,21 +538,6 @@ export class TaskListComponent implements OnInit {
 
 
         error: (error) => {
-
-          console.error(
-            'ERROR CREANDO TAREA:',
-            error
-          );
-
-          console.error(
-            'STATUS:',
-            error?.status
-          );
-
-          console.error(
-            'ERROR:',
-            error?.error
-          );
 
 
           this.createError = this.getRequestError(
@@ -604,11 +558,6 @@ export class TaskListComponent implements OnInit {
   // ============================================================
 
   openEditForm(task: Task): void {
-
-    console.log(
-      'ABRIENDO EDICIÓN:',
-      task
-    );
 
 
     this.editingTaskId = task.id;
@@ -647,10 +596,6 @@ export class TaskListComponent implements OnInit {
 
   cancelEdit(): void {
 
-    console.log(
-      'CANCELANDO EDICIÓN'
-    );
-
 
     this.editingTaskId = null;
 
@@ -682,10 +627,6 @@ export class TaskListComponent implements OnInit {
 
   updateTask(): void {
 
-    console.log(
-      'INICIANDO ACTUALIZACIÓN'
-    );
-
 
     // ----------------------------------------------------------
     // VALIDACIONES
@@ -693,19 +634,11 @@ export class TaskListComponent implements OnInit {
 
     if (this.editingTaskId === null) {
 
-      console.warn(
-        'No existe una tarea en edición.'
-      );
-
       return;
     }
 
 
     if (this.editForm.invalid) {
-
-      console.warn(
-        'FORMULARIO DE EDICIÓN INVÁLIDO'
-      );
 
       this.editForm.markAllAsTouched();
 
@@ -718,10 +651,6 @@ export class TaskListComponent implements OnInit {
     // ----------------------------------------------------------
 
     if (this.updating) {
-
-      console.warn(
-        'Ya existe una actualización en curso.'
-      );
 
       return;
     }
@@ -765,17 +694,6 @@ export class TaskListComponent implements OnInit {
     };
 
 
-    console.log(
-      'TASK ID:',
-      taskId
-    );
-
-    console.log(
-      'PAYLOAD UPDATE:',
-      request
-    );
-
-
     this.changeDetectorRef.detectChanges();
 
 
@@ -793,10 +711,6 @@ export class TaskListComponent implements OnInit {
       .pipe(
 
         finalize(() => {
-
-          console.log(
-            'FINALIZÓ PETICIÓN UPDATE'
-          );
 
 
           /*
@@ -826,11 +740,6 @@ export class TaskListComponent implements OnInit {
 
         next: (updatedTask) => {
 
-          console.log(
-            'TAREA ACTUALIZADA CORRECTAMENTE:',
-            updatedTask
-          );
-
 
           // ----------------------------------------------------
           // ACTUALIZAR LA TAREA EN MEMORIA
@@ -852,12 +761,6 @@ export class TaskListComponent implements OnInit {
 
               }
             );
-
-
-          console.log(
-            'LISTA DESPUÉS DE ACTUALIZAR:',
-            this.tasks
-          );
 
 
           // ----------------------------------------------------
@@ -892,29 +795,6 @@ export class TaskListComponent implements OnInit {
         // ------------------------------------------------------
 
         error: (error) => {
-
-          console.error(
-            'ERROR ACTUALIZANDO TAREA:',
-            error
-          );
-
-
-          console.error(
-            'STATUS:',
-            error?.status
-          );
-
-
-          console.error(
-            'ERROR BODY:',
-            error?.error
-          );
-
-
-          console.error(
-            'ERROR MESSAGE:',
-            error?.message
-          );
 
 
           this.updateError = this.getRequestError(
@@ -985,12 +865,6 @@ export class TaskListComponent implements OnInit {
     }
 
 
-    console.log(
-      'COMPLETANDO TAREA:',
-      task.id
-    );
-
-
     this.taskService
 
       .updateTaskStatus(
@@ -1006,11 +880,6 @@ export class TaskListComponent implements OnInit {
       .subscribe({
 
         next: (updatedTask) => {
-
-          console.log(
-            'TAREA COMPLETADA:',
-            updatedTask
-          );
 
 
           this.tasks =
@@ -1037,11 +906,6 @@ export class TaskListComponent implements OnInit {
 
         error: (error) => {
 
-          console.error(
-            'ERROR COMPLETANDO TAREA:',
-            error
-          );
-
           this.showToast(
             this.getRequestError(error, 'No se pudo completar la tarea.'),
             'error'
@@ -1066,12 +930,6 @@ export class TaskListComponent implements OnInit {
   }
 
   private executeDeleteTask(task: Task): void {
-
-
-    console.log(
-      'ELIMINANDO TAREA:',
-      task.id
-    );
 
 
     this.deletingTaskId =
@@ -1100,11 +958,6 @@ export class TaskListComponent implements OnInit {
 
         next: () => {
 
-          console.log(
-            'TAREA ELIMINADA:',
-            task.id
-          );
-
 
           this.tasks =
             this.tasks.filter(
@@ -1127,11 +980,6 @@ export class TaskListComponent implements OnInit {
 
 
         error: (error) => {
-
-          console.error(
-            'ERROR ELIMINANDO TAREA:',
-            error
-          );
 
           this.showToast(
             this.getRequestError(error, 'No se pudo eliminar la tarea.'),
@@ -1217,12 +1065,6 @@ export class TaskListComponent implements OnInit {
 
         next: (reminders) => {
 
-          console.log(
-            'RECORDATORIOS DE TAREA:',
-            taskId,
-            reminders
-          );
-
 
           this.reminders[
             taskId
@@ -1236,11 +1078,6 @@ export class TaskListComponent implements OnInit {
 
 
         error: (error) => {
-
-          console.error(
-            'ERROR CARGANDO RECORDATORIOS:',
-            error
-          );
 
 
           this.reminders[
@@ -1368,12 +1205,6 @@ export class TaskListComponent implements OnInit {
     };
 
 
-    console.log(
-      'CREANDO RECORDATORIO:',
-      request
-    );
-
-
     this.reminderService
 
       .createReminder(
@@ -1401,11 +1232,6 @@ export class TaskListComponent implements OnInit {
       .subscribe({
 
         next: (reminder) => {
-
-          console.log(
-            'RECORDATORIO CREADO:',
-            reminder
-          );
 
 
           if (
@@ -1443,11 +1269,6 @@ export class TaskListComponent implements OnInit {
 
         error: (error) => {
 
-          console.error(
-            'ERROR CREANDO RECORDATORIO:',
-            error
-          );
-
 
           this.reminderCreateError = this.getRequestError(
             error,
@@ -1483,12 +1304,6 @@ export class TaskListComponent implements OnInit {
   ): void {
 
 
-    console.log(
-      'ELIMINANDO RECORDATORIO:',
-      reminderId
-    );
-
-
     this.reminderService
 
       .deleteReminder(
@@ -1498,11 +1313,6 @@ export class TaskListComponent implements OnInit {
       .subscribe({
 
         next: () => {
-
-          console.log(
-            'RECORDATORIO ELIMINADO:',
-            reminderId
-          );
 
 
           this.reminders[
@@ -1531,11 +1341,6 @@ export class TaskListComponent implements OnInit {
 
 
         error: (error) => {
-
-          console.error(
-            'ERROR ELIMINANDO RECORDATORIO:',
-            error
-          );
 
           this.showToast(
             this.getRequestError(error, 'No se pudo eliminar el recordatorio.'),

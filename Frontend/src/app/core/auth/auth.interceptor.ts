@@ -20,17 +20,5 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
   }
 
-  const authReq = req.clone({
-    headers,
-  });
-
-  console.log('INTERCEPTOR:', {
-    url: authReq.url,
-    hasToken: !!token,
-    hasNgrokHeader: authReq.headers.has(
-      'ngrok-skip-browser-warning'
-    ),
-  });
-
-  return next(authReq);
+  return next(req.clone({ headers }));
 };

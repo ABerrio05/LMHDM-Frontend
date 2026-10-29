@@ -43,17 +43,13 @@ export class RegisterComponent {
     const request = this.registerForm.getRawValue();
 
     this.authService.register(request).subscribe({
-      next: (response) => {
-        console.log('Registro exitoso:', response);
-
+      next: () => {
         this.isLoading = false;
 
         this.router.navigate(['/tasks']);
       },
 
       error: (error) => {
-        console.error('Error de registro:', error);
-
         if (error.status === 409) {
           this.errorMessage =
             'El correo electrónico ya está registrado.';

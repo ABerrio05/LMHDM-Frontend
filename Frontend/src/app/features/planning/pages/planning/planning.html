@@ -1,0 +1,14 @@
+<main class="page">
+  <header class="page-header">
+    <div><span> NEXO · PLANIFICACIÓN</span><h1>Próximos festivos de Colombia</h1><p>Consulta fechas útiles antes de definir entregas, tareas y recordatorios.</p></div>
+    <nav><a routerLink="/tasks">Mis tareas</a><a routerLink="/spaces">Espacios colaborativos</a></nav>
+  </header>
+  <section class="panel">
+    <h2>Calendario externo integrado</h2>
+    <p>Los datos se consultan desde la API pública Nager.Date por medio del backend de NEXO; la aplicación no expone la comunicación externa directamente al navegador.</p>
+    @if (loading) { <p>Cargando festivos...</p> }
+    @else if (error) { <div class="error"><p>{{ error }}</p><button type="button" (click)="loadHolidays()">Reintentar</button></div> }
+    @else if (holidays.length === 0) { <p>No se encontraron próximos festivos.</p> }
+    @else { <div class="holiday-grid">@for (holiday of holidays; track holiday.date + holiday.localName) { <article><time>{{ holiday.date | date:'dd MMM yyyy' }}</time><strong>{{ holiday.localName }}</strong><small>Colombia</small></article> }</div> }
+  </section>
+</main>

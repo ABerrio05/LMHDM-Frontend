@@ -26,6 +26,30 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'spaces',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/collaboration/pages/space-list/space-list').then(
+        (m) => m.SpaceListComponent
+      ),
+  },
+  {
+    path: 'planning',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/planning/pages/planning/planning').then(
+        (m) => m.PlanningComponent
+      ),
+  },
+  {
+    path: 'notes',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/notes/pages/note-list/note-list').then(
+        (m) => m.NoteListComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',
