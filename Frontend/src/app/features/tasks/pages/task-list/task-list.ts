@@ -288,7 +288,7 @@ export class TaskListComponent implements OnInit {
 
     this.authService.logout();
 
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 
   dismissToast(): void {

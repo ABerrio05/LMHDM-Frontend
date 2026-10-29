@@ -59,7 +59,7 @@ export class LoginComponent {
         next: () => {
           this.isLoading = false;
 
-          this.router.navigate(['/tasks']);
+          void this.router.navigate(['/tasks']);
         },
 
         error: () => {
