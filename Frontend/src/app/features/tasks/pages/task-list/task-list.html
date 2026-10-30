@@ -29,23 +29,6 @@
     </div>
 
     <div class="header-actions">
-
-      <a class="logout-button" routerLink="/spaces">
-        Espacios
-      </a>
-
-      <a class="logout-button" routerLink="/planning">
-        Planificación
-      </a>
-
-      <a class="logout-button" routerLink="/notes">
-        Notas
-      </a>
-
-      <a class="logout-button" routerLink="/activity">
-        Mi actividad
-      </a>
-
       <button
         type="button"
         class="logout-button"
@@ -66,6 +49,14 @@
     </div>
 
   </header>
+
+  <nav class="module-menu" aria-label="Módulos de NEXO">
+    <a class="active" routerLink="/tasks">Mis tareas y recordatorios</a>
+    <a routerLink="/planning">Planificación y festivos</a>
+    <a routerLink="/spaces">Espacios colaborativos</a>
+    <a routerLink="/notes">Notas</a>
+    <a routerLink="/activity">Mi actividad</a>
+  </nav>
 
 
   <!-- ============================================================
