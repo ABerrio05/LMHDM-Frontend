@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,7 +14,12 @@ describe('ActivityListComponent', () => {
 
   beforeEach(() => {
     auditLogs.listMine.mockReset();
-    TestBed.configureTestingModule({ providers: [{ provide: AuditLogService, useValue: auditLogs }] });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AuditLogService, useValue: auditLogs },
+        { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
+      ],
+    });
     component = TestBed.runInInjectionContext(() => new ActivityListComponent());
   });
 
