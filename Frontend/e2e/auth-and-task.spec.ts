@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('a user can register, log in and create a task', async ({ page }) => {
+test('a user can register, create a task and consult their activity', async ({ page }) => {
   const unique = `${Date.now()}-${Math.floor(Math.random() * 10_000)}`;
   const email = `e2e-${unique}@nexo.test`;
   const password = 'NexoE2E123';
@@ -29,4 +29,9 @@ test('a user can register, log in and create a task', async ({ page }) => {
   await page.getByRole('button', { name: 'Crear tarea', exact: true }).click();
 
   await expect(page.getByRole('heading', { name: 'Tarea creada por E2E' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Mi actividad' }).click();
+  await expect(page).toHaveURL(/\/activity$/);
+  await expect(page.getByRole('heading', { name: 'Mi actividad' })).toBeVisible();
+  await expect(page.getByText('POST /api/tasks')).toBeVisible();
 });
