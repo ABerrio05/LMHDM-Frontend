@@ -1,0 +1,74 @@
+<main class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">NEXO · COLABORACIÓN</span>
+      <h1>Espacios colaborativos</h1>
+      <p>Crea un espacio, invita usuarios registrados y organiza trabajo compartido.</p>
+    </div>
+    <nav aria-label="Navegación principal">
+      <a routerLink="/tasks">Mis tareas y recordatorios</a>
+      <a routerLink="/planning">Planificación</a>
+      <a routerLink="/notes">Notas</a>
+      <a routerLink="/activity">Mi actividad</a>
+    </nav>
+  </header>
+
+  @if (feedback) { <p class="message success">{{ feedback }}</p> }
+  @if (error) { <p class="message error">{{ error }}</p> }
+
+  <section class="panel">
+    <h2>Crear espacio</h2>
+    <form [formGroup]="spaceForm" (ngSubmit)="createSpace()" class="form-grid">
+      <label>Nombre<input type="text" formControlName="name" placeholder="Ej. Proyecto de ingeniería" /></label>
+      <label>Descripción<input type="text" formControlName="description" placeholder="Objetivo del espacio" /></label>
+      <button type="submit" [disabled]="creating">{{ creating ? 'Creando...' : 'Crear espacio' }}</button>
+    </form>
+  </section>
+
+  @if (loading) { <p class="state">Cargando espacios...</p> }
+  @else if (spaces.length === 0) { <p class="state">Aún no perteneces a un espacio. Crea el primero arriba.</p> }
+  @else {
+    <section class="space-grid" aria-label="Mis espacios colaborativos">
+      @for (space of spaces; track space.id) {
+        <article class="space-card">
+          <span class="space-id">ESPACIO #{{ space.id }}</span>
+          <h2>{{ space.name }}</h2>
+          <p>{{ space.description || 'Sin descripción.' }}</p>
+          <button type="button" class="secondary" (click)="toggleMembers(space.id)">
+            {{ expandedSpaceId === space.id ? 'Ocultar integrantes' : 'Ver e invitar integrantes' }}
+          </button>
+
+          @if (expandedSpaceId === space.id) {
+            <div class="members">
+              <h3>Integrantes</h3>
+              @if ((members[space.id] ?? []).length === 0) { <p>Aún no hay integrantes cargados.</p> }
+              @else {
+                <ul>
+                  @for (member of members[space.id]; track member.id) {
+                    <li>Usuario #{{ member.userId }} <strong>{{ member.role }}</strong></li>
+                  }
+                </ul>
+              }
+              <form [formGroup]="inviteForm" (ngSubmit)="invite(space.id)" class="invite-form">
+                <label>Correo del usuario registrado<input type="email" formControlName="email" placeholder="compañero@correo.com" /></label>
+                <label>Rol<select formControlName="role"><option value="MIEMBRO">Miembro</option><option value="MODERADOR">Moderador</option><option value="INVITADO">Invitado</option></select></label>
+                <button type="submit" [disabled]="inviting">{{ inviting ? 'Agregando...' : 'Agregar integrante' }}</button>
+              </form>
+
+              <h3 class="space-tasks-title">Tareas del espacio</h3>
+              @if ((spaceTasks[space.id] ?? []).length === 0) {
+                <p>No hay tareas asignadas todavía. Crea una desde “Mis tareas” y selecciona este espacio.</p>
+              } @else {
+                <ul class="space-tasks">
+                  @for (task of spaceTasks[space.id]; track task.id) {
+                    <li><strong>{{ task.title }}</strong><span>{{ task.status }} · {{ task.priority }}</span></li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </article>
+      }
+    </section>
+  }
+</main>

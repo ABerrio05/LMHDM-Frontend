@@ -29,7 +29,6 @@
     </div>
 
     <div class="header-actions">
-
       <button
         type="button"
         class="logout-button"
@@ -50,6 +49,14 @@
     </div>
 
   </header>
+
+  <nav class="module-menu" aria-label="Módulos de NEXO">
+    <a class="active" routerLink="/tasks">Mis tareas y recordatorios</a>
+    <a routerLink="/planning">Planificación y festivos</a>
+    <a routerLink="/spaces">Espacios colaborativos</a>
+    <a routerLink="/notes">Notas</a>
+    <a routerLink="/activity">Mi actividad</a>
+  </nav>
 
 
   <!-- ============================================================
@@ -169,6 +176,34 @@
               </option>
 
             </select>
+
+          </div>
+
+
+          <div class="form-field form-field-full">
+
+            <label for="create-space">
+              Espacio colaborativo
+            </label>
+
+            <select
+              id="create-space"
+              formControlName="spaceId"
+            >
+              <option value="">
+                Tarea personal (sin espacio)
+              </option>
+
+              @for (space of collaborativeSpaces; track space.id) {
+                <option [value]="space.id">
+                  {{ space.name }}
+                </option>
+              }
+            </select>
+
+            <small class="field-help">
+              Selecciona un espacio si la tarea debe ser compartida con sus integrantes.
+            </small>
 
           </div>
 

@@ -1,0 +1,34 @@
+<main class="page">
+  <header>
+    <div>
+      <span>NEXO · SEGURIDAD Y TRAZABILIDAD</span>
+      <h1>Mi actividad</h1>
+      <p>Consulta las acciones recientes de tu cuenta. No se almacenan contraseñas, tokens ni el contenido de tus formularios.</p>
+    </div>
+    <nav>
+      <a routerLink="/tasks">Mis tareas y recordatorios</a>
+      <a routerLink="/spaces">Espacios</a>
+      <a routerLink="/planning">Planificación</a>
+      <a routerLink="/notes">Notas</a>
+    </nav>
+  </header>
+
+  @if (error) {
+    <section class="message error"><p>{{ error }}</p><button type="button" (click)="load()">Reintentar</button></section>
+  }
+
+  @if (loading) {
+    <p class="state">Cargando actividad...</p>
+  } @else if (entries.length === 0) {
+    <section class="empty"><h2>Aún no hay actividad registrada</h2><p>Cuando uses las funciones protegidas de NEXO, tus acciones aparecerán aquí.</p></section>
+  } @else {
+    <section class="activity-list" aria-label="Actividad reciente">
+      @for (entry of entries; track entry.id) {
+        <article>
+          <div class="entry-main"><time>{{ entry.createdAt | date:'dd MMM yyyy, HH:mm:ss' }}</time><h2>{{ entry.action }}</h2><p>{{ entry.path }}</p></div>
+          <div class="entry-meta"><span class="badge" [class.error-status]="entry.statusCode >= 400">{{ statusLabel(entry) }} · {{ entry.statusCode }}</span><span>{{ entry.durationMs }} ms</span></div>
+        </article>
+      }
+    </section>
+  }
+</main>
