@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -16,6 +16,7 @@ import { AuditLogService } from '../../../../infrastructure/audit/audit-log.serv
 })
 export class ActivityListComponent implements OnInit {
   private readonly auditLogs = inject(AuditLogService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   entries: AuditLog[] = [];
   loading = false;
   error = '';
@@ -25,9 +26,18 @@ export class ActivityListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    this.auditLogs.listMine().pipe(finalize(() => this.loading = false)).subscribe({
-      next: entries => this.entries = Array.isArray(entries) ? entries : [],
-      error: error => this.error = this.message(error),
+    this.auditLogs.listMine().pipe(finalize(() => {
+      this.loading = false;
+      this.changeDetector.markForCheck();
+    })).subscribe({
+      next: entries => {
+        this.entries = Array.isArray(entries) ? entries : [];
+        this.changeDetector.markForCheck();
+      },
+      error: error => {
+        this.error = this.message(error);
+        this.changeDetector.markForCheck();
+      },
     });
   }
 

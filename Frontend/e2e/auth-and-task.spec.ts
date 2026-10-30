@@ -30,8 +30,16 @@ test('a user can register, create a task and consult their activity', async ({ p
 
   await expect(page.getByRole('heading', { name: 'Tarea creada por E2E' })).toBeVisible();
 
+  const activityResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/audit-logs') && response.request().method() === 'GET',
+    { timeout: 120_000 },
+  );
   await page.getByRole('link', { name: 'Mi actividad' }).click();
   await expect(page).toHaveURL(/\/activity$/);
   await expect(page.getByRole('heading', { name: 'Mi actividad' })).toBeVisible();
-  await expect(page.getByText('POST /api/tasks')).toBeVisible();
+  const activityPayload = await (await activityResponse).json();
+  expect(activityPayload).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'POST /api/tasks' })]));
+  // El backend y PostgreSQL se ejecutan en contenedores locales; bajo carga
+  // inicial la consulta de auditoría puede tardar más que el timeout por defecto.
+  await expect(page.getByText('POST /api/tasks')).toBeVisible({ timeout: 30_000 });
 });
