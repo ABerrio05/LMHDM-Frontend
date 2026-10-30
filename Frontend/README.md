@@ -34,6 +34,16 @@ To build the project run:
 ng build
 ```
 
+## Docker
+
+El `Dockerfile` construye la aplicación Angular y la sirve mediante Nginx en un contenedor no privilegiado. Para levantar el proyecto completo (frontend, backend y PostgreSQL), desde la raíz de NEXO ejecuta:
+
+```bash
+docker compose up --build
+```
+
+La aplicación estará disponible en `http://localhost:4200`. Nginx redirige las solicitudes `/api` al servicio backend, por lo que no se requiere configurar una URL externa para el contenedor.
+
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
 ## Running unit tests

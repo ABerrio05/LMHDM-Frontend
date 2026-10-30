@@ -56,23 +56,13 @@ export class LoginComponent {
     this.authService
       .login(this.loginForm.getRawValue())
       .subscribe({
-        next: (response) => {
-          console.log(
-            'Login exitoso:',
-            response
-          );
-
+        next: () => {
           this.isLoading = false;
 
-          this.router.navigate(['/tasks']);
+          void this.router.navigate(['/tasks']);
         },
 
-        error: (error) => {
-          console.error(
-            'Error de login:',
-            error
-          );
-
+        error: () => {
           this.errorMessage =
             'No fue posible iniciar sesión.';
 

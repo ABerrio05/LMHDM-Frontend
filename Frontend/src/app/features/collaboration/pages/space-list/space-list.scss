@@ -1,0 +1,13 @@
+:host { display: block; min-height: 100vh; background: #f8fafc; color: #0f172a; }
+.page { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 72px; }
+.page-header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 28px; }
+.eyebrow, .space-id { color: #2563eb; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; }
+h1 { margin: 8px 0; font-size: clamp(30px, 5vw, 44px); } h2 { margin: 0 0 12px; } p { color: #64748b; line-height: 1.55; }
+nav { display: flex; gap: 10px; flex-wrap: wrap; } nav a, .secondary { color: #1d4ed8; border: 1px solid #bfdbfe; background: white; padding: 10px 14px; border-radius: 10px; text-decoration: none; font-weight: 700; cursor: pointer; }
+.panel, .space-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 10px 26px rgba(15,23,42,.06); padding: 24px; }
+.form-grid, .invite-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end; }
+label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; } input, select { min-height: 42px; border: 1px solid #cbd5e1; border-radius: 9px; padding: 0 11px; font: inherit; }
+button[type='submit'] { min-height: 42px; border: 0; border-radius: 9px; padding: 0 16px; background: #2563eb; color: #fff; font-weight: 800; cursor: pointer; } button:disabled { opacity: .6; cursor: wait; }
+.space-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 24px; }.members { margin-top: 18px; padding-top: 18px; border-top: 1px solid #e2e8f0; }.members ul { padding-left: 18px; color: #475569; }.members li { margin: 8px 0; }.members strong { margin-left: 8px; color: #2563eb; font-size: 12px; }.invite-form { grid-template-columns: 1fr 130px auto; }.message { padding: 12px 15px; border-radius: 10px; }.success { background: #ecfdf5; color: #047857; }.error { background: #fef2f2; color: #b91c1c; }.state { padding: 30px 0; }
+.space-tasks-title { margin-top: 22px; }.space-tasks { list-style: none; padding: 0; }.space-tasks li { display: flex; justify-content: space-between; gap: 12px; padding: 10px; margin: 8px 0; background: #f8fafc; border-radius: 8px; }.space-tasks li strong { margin: 0; color: #1e293b; }.space-tasks span { color: #64748b; font-size: 12px; }
+@media (max-width: 720px) { .page-header, .form-grid, .invite-form { grid-template-columns: 1fr; display: grid; }.page { width: min(100% - 28px, 1120px); } }
