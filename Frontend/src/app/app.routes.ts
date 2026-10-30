@@ -50,6 +50,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'activity',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/audit/pages/activity-list/activity-list').then(
+        (m) => m.ActivityListComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',
