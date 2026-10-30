@@ -4,7 +4,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+# Reintentos acotados frente a cortes de red durante la descarga de dependencias.
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 1000 \
+    && npm config set fetch-retry-maxtimeout 10000 \
+    && npm ci --no-audit --no-fund
 
 COPY . ./
 RUN npm run build
