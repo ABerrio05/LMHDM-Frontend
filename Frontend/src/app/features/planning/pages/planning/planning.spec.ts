@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,7 +13,12 @@ describe('PlanningComponent', () => {
 
   beforeEach(() => {
     calendar.listUpcomingColombianHolidays.mockReset();
-    TestBed.configureTestingModule({ providers: [{ provide: HolidayCalendarService, useValue: calendar }] });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: HolidayCalendarService, useValue: calendar },
+        { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
+      ],
+    });
     component = TestBed.runInInjectionContext(() => new PlanningComponent());
   });
 

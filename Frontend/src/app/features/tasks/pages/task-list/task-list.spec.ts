@@ -15,7 +15,7 @@ describe('TaskListComponent', () => {
   const taskService = { getTasks: vi.fn(), createTask: vi.fn(), updateTask: vi.fn(), updateTaskStatus: vi.fn(), deleteTask: vi.fn() };
   const reminderService = { getReminders: vi.fn(), createReminder: vi.fn(), deleteReminder: vi.fn() };
   const spacesService = { listMine: vi.fn() };
-  const authService = { logout: vi.fn() };
+  const authService = { logout: vi.fn(), isDeveloper: vi.fn(() => false) };
   const router = { navigate: vi.fn().mockResolvedValue(true) };
   const changeDetector = { detectChanges: vi.fn() };
   const firstTask = { id: 1, title: 'Pruebas', description: 'Ejecutar calidad', dueDate: '2099-10-20T09:00:00', priority: 'ALTA' as const, status: 'PENDIENTE' as const, ownerId: 7, spaceId: null, recurrenceId: null };
