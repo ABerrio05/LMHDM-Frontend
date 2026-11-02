@@ -31,7 +31,7 @@ describe('AuthService', () => {
     const request = http.expectOne(`${environment.apiUrl}/auth/login`);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ email: 'ana@nexo.test', password: 'ClaveSegura1' });
-    request.flush({ userId: 1, name: 'Ana', email: 'ana@nexo.test', accessToken: 'jwt-test' });
+    request.flush({ userId: 1, name: 'Ana', email: 'ana@nexo.test', role: 'USER', accessToken: 'jwt-test' });
 
     expect(service.getAccessToken()).toBe('jwt-test');
     expect(service.isAuthenticated()).toBe(true);
@@ -44,7 +44,7 @@ describe('AuthService', () => {
     const request = http.expectOne(`${environment.apiUrl}/auth/register`);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(payload);
-    request.flush({ userId: 2, name: payload.name, email: payload.email, accessToken: 'jwt-register' });
+    request.flush({ userId: 2, name: payload.name, email: payload.email, role: 'USER', accessToken: 'jwt-register' });
 
     expect(service.getAccessToken()).toBe('jwt-register');
   });
@@ -56,5 +56,6 @@ describe('AuthService', () => {
 
     expect(service.getAccessToken()).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
+    expect(service.isDeveloper()).toBe(false);
   });
 });

@@ -9,7 +9,7 @@
       <a routerLink="/tasks">Mis tareas y recordatorios</a>
       <a routerLink="/planning">Planificación</a>
       <a routerLink="/notes">Notas</a>
-      <a routerLink="/activity">Mi actividad</a>
+      <a routerLink="/assistant">Asistente IA</a>
     </nav>
   </header>
 
@@ -34,9 +34,26 @@
           <span class="space-id">ESPACIO #{{ space.id }}</span>
           <h2>{{ space.name }}</h2>
           <p>{{ space.description || 'Sin descripción.' }}</p>
-          <button type="button" class="secondary" (click)="toggleMembers(space.id)">
-            {{ expandedSpaceId === space.id ? 'Ocultar integrantes' : 'Ver e invitar integrantes' }}
-          </button>
+          <div class="space-actions">
+            <button type="button" class="secondary" (click)="toggleMembers(space.id)">
+              {{ expandedSpaceId === space.id ? 'Ocultar integrantes' : 'Ver e invitar integrantes' }}
+            </button>
+            <button type="button" class="secondary" (click)="startEdit(space)">Editar</button>
+            <button type="button" class="danger" [disabled]="deletingSpaceId === space.id" (click)="deleteSpace(space)">
+              {{ deletingSpaceId === space.id ? 'Eliminando...' : 'Eliminar' }}
+            </button>
+          </div>
+
+          @if (editingSpaceId === space.id) {
+            <form [formGroup]="editForm" (ngSubmit)="saveEdit(space.id)" class="edit-form">
+              <label>Nombre<input type="text" formControlName="name" /></label>
+              <label>Descripción<input type="text" formControlName="description" /></label>
+              <div class="edit-actions">
+                <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button>
+                <button type="submit" [disabled]="savingEdit">{{ savingEdit ? 'Guardando...' : 'Guardar cambios' }}</button>
+              </div>
+            </form>
+          }
 
           @if (expandedSpaceId === space.id) {
             <div class="members">

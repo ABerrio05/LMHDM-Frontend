@@ -27,9 +27,12 @@ export class SpaceListComponent implements OnInit {
   members: Record<number, SpaceMember[]> = {};
   spaceTasks: Record<number, Task[]> = {};
   expandedSpaceId: number | null = null;
+  editingSpaceId: number | null = null;
   loading = false;
   creating = false;
   inviting = false;
+  savingEdit = false;
+  deletingSpaceId: number | null = null;
   error = '';
   feedback = '';
 
@@ -41,6 +44,11 @@ export class SpaceListComponent implements OnInit {
   readonly inviteForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     role: ['MIEMBRO' as const, Validators.required],
+  });
+
+  readonly editForm = this.formBuilder.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(150)]],
+    description: ['', Validators.maxLength(500)],
   });
 
   ngOnInit(): void {
@@ -91,6 +99,60 @@ export class SpaceListComponent implements OnInit {
       next: tasks => this.spaceTasks[spaceId] = Array.isArray(tasks) ? tasks : [],
       error: () => this.spaceTasks[spaceId] = [],
     });
+  }
+
+  startEdit(space: CollaborativeSpace): void {
+    this.error = '';
+    this.feedback = '';
+    this.editingSpaceId = space.id;
+    this.editForm.reset({ name: space.name, description: space.description ?? '' });
+  }
+
+  cancelEdit(): void {
+    this.editingSpaceId = null;
+    this.editForm.reset({ name: '', description: '' });
+  }
+
+  saveEdit(spaceId: number): void {
+    if (this.editForm.invalid || this.savingEdit) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+    this.savingEdit = true;
+    this.error = '';
+    const value = this.editForm.getRawValue();
+    this.spacesService.update(spaceId, { name: value.name.trim(), description: value.description.trim() || undefined })
+      .pipe(finalize(() => this.savingEdit = false))
+      .subscribe({
+        next: updated => {
+          this.spaces = this.spaces.map(space => space.id === spaceId ? updated : space);
+          this.cancelEdit();
+          this.feedback = 'Espacio actualizado correctamente.';
+        },
+        error: error => this.error = this.messageFrom(error, 'No se pudo actualizar el espacio. Solo un administrador puede editarlo.'),
+      });
+  }
+
+  deleteSpace(space: CollaborativeSpace): void {
+    if (this.deletingSpaceId !== null || !window.confirm(`¿Eliminar el espacio “${space.name}”? Las tareas no se borrarán; quedarán como tareas personales.`)) {
+      return;
+    }
+    this.deletingSpaceId = space.id;
+    this.error = '';
+    this.feedback = '';
+    this.spacesService.delete(space.id)
+      .pipe(finalize(() => this.deletingSpaceId = null))
+      .subscribe({
+        next: () => {
+          this.spaces = this.spaces.filter(item => item.id !== space.id);
+          delete this.members[space.id];
+          delete this.spaceTasks[space.id];
+          if (this.expandedSpaceId === space.id) this.expandedSpaceId = null;
+          if (this.editingSpaceId === space.id) this.cancelEdit();
+          this.feedback = 'Espacio eliminado. Sus tareas quedaron disponibles como tareas personales.';
+        },
+        error: error => this.error = this.messageFrom(error, 'No se pudo eliminar el espacio. Solo un administrador puede eliminarlo.'),
+      });
   }
 
   invite(spaceId: number): void {

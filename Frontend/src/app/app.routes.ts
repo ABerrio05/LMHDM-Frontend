@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth/auth.guard';
+import { developerGuard } from './core/auth/developer.guard';
 
 export const routes: Routes = [
   {
@@ -50,8 +51,16 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'activity',
+    path: 'assistant',
     canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/assistant/pages/task-assistant/task-assistant').then(
+        (m) => m.TaskAssistantComponent
+      ),
+  },
+  {
+    path: 'developer/logs',
+    canActivate: [authGuard, developerGuard],
     loadComponent: () =>
       import('./features/audit/pages/activity-list/activity-list').then(
         (m) => m.ActivityListComponent

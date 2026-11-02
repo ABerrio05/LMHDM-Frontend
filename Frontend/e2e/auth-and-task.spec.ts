@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('a user can register, create a task and consult their activity', async ({ page }) => {
+test('a user can register, create a task and save a personal note', async ({ page }) => {
   const unique = `${Date.now()}-${Math.floor(Math.random() * 10_000)}`;
   const email = `e2e-${unique}@nexo.test`;
   const password = 'NexoE2E123';
@@ -30,16 +30,26 @@ test('a user can register, create a task and consult their activity', async ({ p
 
   await expect(page.getByRole('heading', { name: 'Tarea creada por E2E' })).toBeVisible();
 
-  const activityResponse = page.waitForResponse(
-    (response) => response.url().includes('/api/audit-logs') && response.request().method() === 'GET',
+  const noteResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/notes') && response.request().method() === 'POST',
     { timeout: 120_000 },
   );
-  await page.getByRole('link', { name: 'Mi actividad' }).click();
-  await expect(page).toHaveURL(/\/activity$/);
-  await expect(page.getByRole('heading', { name: 'Mi actividad' })).toBeVisible();
-  const activityPayload = await (await activityResponse).json();
-  expect(activityPayload).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'POST /api/tasks' })]));
-  // El backend y PostgreSQL se ejecutan en contenedores locales; bajo carga
-  // inicial la consulta de auditoría puede tardar más que el timeout por defecto.
-  await expect(page.getByText('POST /api/tasks')).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('link', { name: 'Notas' }).click();
+  await expect(page).toHaveURL(/\/notes$/);
+  await expect(page.getByRole('heading', { name: 'Mis notas' })).toBeVisible();
+  await page.getByLabel('Título').fill('Nota creada por E2E');
+  await page.getByLabel('Contenido').fill('Persistencia verificada desde el navegador.');
+  await page.getByRole('button', { name: 'Guardar nota' }).click();
+  await expect((await noteResponse).status()).toBe(201);
+  await expect(page.getByRole('heading', { name: 'Nota creada por E2E' })).toBeVisible({ timeout: 30_000 });
+
+  const holidaysResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/calendar/holidays/colombia') && response.request().method() === 'GET',
+    { timeout: 30_000 },
+  );
+  await page.getByRole('link', { name: 'Planificación' }).click();
+  await expect(page).toHaveURL(/\/planning$/);
+  await expect((await holidaysResponse).status()).toBe(200);
+  await expect(page.getByRole('heading', { name: 'Próximos festivos de Colombia' })).toBeVisible();
+  await expect(page.locator('.holiday-grid article').first()).toBeVisible({ timeout: 30_000 });
 });

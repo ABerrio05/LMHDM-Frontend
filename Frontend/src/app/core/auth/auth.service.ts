@@ -15,6 +15,7 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/auth`;
   private readonly tokenKey = 'accessToken';
+  private readonly roleKey = 'nexo.userRole';
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http
@@ -23,12 +24,7 @@ export class AuthService {
         credentials
       )
       .pipe(
-        tap((response) => {
-          localStorage.setItem(
-            this.tokenKey,
-            response.accessToken
-          );
-        })
+        tap((response) => this.persistSession(response))
       );
   }
 
@@ -41,12 +37,7 @@ export class AuthService {
         request
       )
       .pipe(
-        tap((response) => {
-          localStorage.setItem(
-            this.tokenKey,
-            response.accessToken
-          );
-        })
+        tap((response) => this.persistSession(response))
       );
   }
 
@@ -57,12 +48,20 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(
-      this.tokenKey
-    );
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.roleKey);
   }
 
   isAuthenticated(): boolean {
     return this.getAccessToken() !== null;
+  }
+
+  isDeveloper(): boolean {
+    return localStorage.getItem(this.roleKey) === 'DEVELOPER';
+  }
+
+  private persistSession(response: AuthResponse): void {
+    localStorage.setItem(this.tokenKey, response.accessToken);
+    localStorage.setItem(this.roleKey, response.role);
   }
 }

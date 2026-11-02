@@ -2,14 +2,15 @@
   <header>
     <div>
       <span>NEXO · SEGURIDAD Y TRAZABILIDAD</span>
-      <h1>Mi actividad</h1>
-      <p>Consulta las acciones recientes de tu cuenta. No se almacenan contraseñas, tokens ni el contenido de tus formularios.</p>
+      <h1>Registros de la plataforma</h1>
+      <p>Panel exclusivo de desarrollo para consultar la trazabilidad técnica. No se almacenan contraseñas, tokens ni el contenido de formularios.</p>
     </div>
     <nav>
       <a routerLink="/tasks">Mis tareas y recordatorios</a>
       <a routerLink="/spaces">Espacios</a>
       <a routerLink="/planning">Planificación</a>
       <a routerLink="/notes">Notas</a>
+      <a routerLink="/assistant">Asistente IA</a>
     </nav>
   </header>
 
@@ -17,12 +18,28 @@
     <section class="message error"><p>{{ error }}</p><button type="button" (click)="load()">Reintentar</button></section>
   }
 
+  <section class="accounts" aria-label="Administración de cuentas">
+    <div class="section-heading"><div><h2>Cuentas de plataforma</h2><p>Consulta roles y bloquea o reactiva cuentas sin exponer contraseñas.</p></div><button type="button" (click)="loadUsers()">Actualizar cuentas</button></div>
+    @if (usersError) { <p class="inline-error">{{ usersError }}</p> }
+    @if (usersLoading) { <p class="state">Cargando cuentas...</p> }
+    @else if (users.length === 0) { <p class="state">No hay cuentas para mostrar.</p> }
+    @else { <div class="users-table"><div class="user-row user-header"><span>Cuenta</span><span>Rol</span><span>Acciones</span></div>
+      @for (user of users; track user.id) { <div class="user-row"><div><strong>{{ user.name }}</strong><small>{{ user.email }}</small></div><select [value]="user.role" (change)="changeRole(user, $event)" [disabled]="user.role === 'DEVELOPER'"><option value="USER">Usuario</option><option value="ADMIN">Administrador</option><option value="DEVELOPER">Desarrollador</option></select><div class="user-actions"><button type="button" [class.deactivate]="user.active" (click)="toggleActive(user)" [disabled]="user.role === 'DEVELOPER'">{{ user.active ? 'Bloquear' : 'Reactivar' }}</button><button type="button" (click)="resetPassword(user)" [disabled]="user.role === 'DEVELOPER' || resettingUserId === user.id">{{ resettingUserId === user.id ? 'Actualizando...' : 'Restablecer clave' }}</button></div></div> }
+    </div> }
+  </section>
+
+  <section class="metrics" aria-label="Métricas de notificaciones">
+    <div class="section-heading"><div><h2>Entrega de notificaciones</h2><p>Estado persistido de los correos de recordatorio.</p></div><button type="button" (click)="loadMetrics()">Actualizar métricas</button></div>
+    @if (metricsError) { <p class="inline-error">{{ metricsError }}</p> }
+    @else if (notificationMetrics) { <div class="metrics-grid"><article><strong>{{ notificationMetrics.sent }}</strong><span>Enviadas</span></article><article><strong>{{ notificationMetrics.pending }}</strong><span>Pendientes</span></article><article class="failed"><strong>{{ notificationMetrics.failed }}</strong><span>Fallidas</span></article><article><strong>{{ notificationMetrics.total }}</strong><span>Total</span></article></div> }
+  </section>
+
   @if (loading) {
-    <p class="state">Cargando actividad...</p>
+    <p class="state">Cargando registros...</p>
   } @else if (entries.length === 0) {
-    <section class="empty"><h2>Aún no hay actividad registrada</h2><p>Cuando uses las funciones protegidas de NEXO, tus acciones aparecerán aquí.</p></section>
+    <section class="empty"><h2>Aún no hay registros</h2><p>Cuando se usen las funciones protegidas de NEXO, la trazabilidad aparecerá aquí.</p></section>
   } @else {
-    <section class="activity-list" aria-label="Actividad reciente">
+    <section class="activity-list" aria-label="Registros recientes de plataforma">
       @for (entry of entries; track entry.id) {
         <article>
           <div class="entry-main"><time>{{ entry.createdAt | date:'dd MMM yyyy, HH:mm:ss' }}</time><h2>{{ entry.action }}</h2><p>{{ entry.path }}</p></div>

@@ -55,7 +55,10 @@
     <a routerLink="/planning">Planificación y festivos</a>
     <a routerLink="/spaces">Espacios colaborativos</a>
     <a routerLink="/notes">Notas</a>
-    <a routerLink="/activity">Mi actividad</a>
+    <a routerLink="/assistant">Asistente IA</a>
+    @if (isDeveloper) {
+      <a routerLink="/developer/logs">Actividad técnica</a>
+    }
   </nav>
 
 
@@ -206,6 +209,30 @@
             </small>
 
           </div>
+
+          <div class="form-field">
+            <label for="create-recurrence">Repetición</label>
+            <select id="create-recurrence" formControlName="recurrenceFrequency">
+              <option value="">No se repite</option>
+              <option value="DIARIA">Diaria</option>
+              <option value="SEMANAL">Semanal</option>
+              <option value="PERSONALIZADA">Personalizada (cada cierto número de días)</option>
+            </select>
+          </div>
+
+          @if (taskForm.controls.recurrenceFrequency.value) {
+            <div class="form-field">
+              <label for="create-recurrence-interval">Intervalo</label>
+              <input id="create-recurrence-interval" type="number" min="1" max="365" formControlName="recurrenceInterval" />
+              <small class="field-help">Cada cuántos días o semanas se repetirá la tarea.</small>
+            </div>
+
+            <div class="form-field form-field-full">
+              <label for="create-recurrence-end">Finaliza el</label>
+              <input id="create-recurrence-end" type="date" formControlName="recurrenceEndDate" />
+              <small class="field-help">Opcional. Al completar la tarea se generará la siguiente ocurrencia dentro de este límite.</small>
+            </div>
+          }
 
         </div>
 
@@ -801,6 +828,10 @@
 
               </div>
 
+              <p class="reminder-email-help">
+                Al llegar la fecha programada, NEXO envía una alerta al correo asociado a tu cuenta.
+              </p>
+
 
               <!-- CARGANDO RECORDATORIOS -->
 
@@ -963,6 +994,32 @@
                       }
 
                     </div>
+
+                  </div>
+
+                  <div class="form-grid">
+
+                    <div class="form-field">
+                      <label [for]="'reminder-recurrence-' + task.id">Repetir recordatorio</label>
+                      <select [id]="'reminder-recurrence-' + task.id" formControlName="recurrenceFrequency">
+                        <option value="">No repetir</option>
+                        <option value="DIARIA">Diariamente</option>
+                        <option value="SEMANAL">Semanalmente</option>
+                        <option value="PERSONALIZADA">Cada cierto número de días</option>
+                      </select>
+                    </div>
+
+                    @if (reminderForm.controls.recurrenceFrequency.value) {
+                      <div class="form-field">
+                        <label [for]="'reminder-interval-' + task.id">Intervalo</label>
+                        <input [id]="'reminder-interval-' + task.id" type="number" min="1" max="365" formControlName="recurrenceInterval" />
+                      </div>
+
+                      <div class="form-field">
+                        <label [for]="'reminder-end-' + task.id">Finaliza el (opcional)</label>
+                        <input [id]="'reminder-end-' + task.id" type="date" formControlName="recurrenceEndDate" />
+                      </div>
+                    }
 
                   </div>
 

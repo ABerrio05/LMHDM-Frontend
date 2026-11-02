@@ -72,11 +72,11 @@ describe('TaskListComponent', () => {
   it('creates a task, resets the form and shows feedback', () => {
     taskService.createTask.mockReturnValue(of(firstTask));
     component.openCreateForm();
-    component.taskForm.setValue({ title: 'Pruebas', description: 'Ejecutar calidad', dueDate: '2099-10-20T09:00', priority: 'ALTA', spaceId: '' });
+    component.taskForm.setValue({ title: 'Pruebas', description: 'Ejecutar calidad', dueDate: '2099-10-20T09:00', priority: 'ALTA', spaceId: '', recurrenceFrequency: '', recurrenceInterval: 1, recurrenceEndDate: '' });
 
     component.createTask();
 
-    expect(taskService.createTask).toHaveBeenCalledWith({ title: 'Pruebas', description: 'Ejecutar calidad', dueDate: '2099-10-20T09:00', priority: 'ALTA', spaceId: undefined });
+    expect(taskService.createTask).toHaveBeenCalledWith({ title: 'Pruebas', description: 'Ejecutar calidad', dueDate: '2099-10-20T09:00', priority: 'ALTA', spaceId: undefined, recurrenceFrequency: undefined, recurrenceInterval: undefined, recurrenceEndDate: undefined });
     expect(component.tasks).toEqual([firstTask]);
     expect(component.showCreateForm).toBe(false);
     expect(component.toast?.kind).toBe('success');
@@ -86,7 +86,7 @@ describe('TaskListComponent', () => {
     component.createTask();
     expect(taskService.createTask).not.toHaveBeenCalled();
 
-    component.taskForm.setValue({ title: 'Pruebas', description: '', dueDate: '', priority: 'MEDIA', spaceId: '' });
+    component.taskForm.setValue({ title: 'Pruebas', description: '', dueDate: '', priority: 'MEDIA', spaceId: '', recurrenceFrequency: '', recurrenceInterval: 1, recurrenceEndDate: '' });
     taskService.createTask.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'Título duplicado' } })));
     component.createTask();
     expect(component.createError).toBe('Título duplicado');
@@ -122,7 +122,7 @@ describe('TaskListComponent', () => {
     component.confirmAction();
     expect(component.tasks).toEqual([]);
 
-    component.reminders[1] = [{ id: 2, taskId: 1, message: 'Recordar', scheduledAt: '2099-10-20T08:00:00' }];
+    component.reminders[1] = [{ id: 2, taskId: 1, message: 'Recordar', scheduledAt: '2099-10-20T08:00:00', recurrenceId: null }];
     reminderService.deleteReminder.mockReturnValue(of(void 0));
     component.deleteReminder(2, 1);
     component.confirmAction();
@@ -130,7 +130,7 @@ describe('TaskListComponent', () => {
   });
 
   it('loads and creates reminders, and supports logout', () => {
-    const reminder = { id: 2, taskId: 1, message: 'Recordar', scheduledAt: '2099-10-20T08:00:00' };
+    const reminder = { id: 2, taskId: 1, message: 'Recordar', scheduledAt: '2099-10-20T08:00:00', recurrenceId: null };
     reminderService.getReminders.mockReturnValue(of([reminder]));
     component.toggleReminders(1);
     expect(component.expandedTaskId).toBe(1);
@@ -140,7 +140,13 @@ describe('TaskListComponent', () => {
 
     reminderService.createReminder.mockReturnValue(of(reminder));
     component.openReminderForm(1);
-    component.reminderForm.setValue({ scheduledAt: '2099-10-20T08:00', message: 'Recordar' });
+    component.reminderForm.setValue({
+      scheduledAt: '2099-10-20T08:00',
+      message: 'Recordar',
+      recurrenceFrequency: '',
+      recurrenceInterval: 1,
+      recurrenceEndDate: '',
+    });
     component.createReminder();
     expect(component.reminderFormTaskId).toBeNull();
     expect(component.toast?.text).toContain('Recordatorio creado');

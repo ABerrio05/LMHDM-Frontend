@@ -16,6 +16,7 @@ import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { requestTimeoutInterceptor } from './core/interceptors/request-timeout.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,7 +25,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
 
     provideHttpClient(
-      withInterceptors([authInterceptor])
+      withInterceptors([authInterceptor, requestTimeoutInterceptor])
     ),
 
     provideServiceWorker('ngsw-worker.js', {

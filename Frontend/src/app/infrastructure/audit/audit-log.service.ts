@@ -8,9 +8,9 @@ import { AuditLog } from '../../domain/audit/audit-log.model';
 @Injectable({ providedIn: 'root' })
 export class AuditLogService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/audit-logs`;
+  private readonly apiUrl = `${environment.apiUrl}/developer/audit-logs`;
 
-  listMine(limit = 50): Observable<AuditLog[]> {
+  listPlatform(limit = 50): Observable<AuditLog[]> {
     return this.http.get<AuditLog[]>(this.apiUrl, { params: new HttpParams().set('limit', limit) });
   }
 }

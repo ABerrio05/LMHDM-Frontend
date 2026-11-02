@@ -8,12 +8,12 @@ import { AuditLogService } from '../../../../infrastructure/audit/audit-log.serv
 import { ActivityListComponent } from './activity-list';
 
 describe('ActivityListComponent', () => {
-  const auditLogs = { listMine: vi.fn() };
+  const auditLogs = { listPlatform: vi.fn() };
   const entry = { id: 1, userId: 7, action: 'POST /api/tasks', method: 'POST', path: '/api/tasks', statusCode: 201, durationMs: 12, requestId: 'request-1', createdAt: '2026-10-29T12:00:00' };
   let component: ActivityListComponent;
 
   beforeEach(() => {
-    auditLogs.listMine.mockReset();
+    auditLogs.listPlatform.mockReset();
     TestBed.configureTestingModule({
       providers: [
         { provide: AuditLogService, useValue: auditLogs },
@@ -25,8 +25,8 @@ describe('ActivityListComponent', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
-  it('loads the users activity and labels successful and failing actions', () => {
-    auditLogs.listMine.mockReturnValue(of([entry]));
+  it('loads platform activity and labels successful and failing actions', () => {
+    auditLogs.listPlatform.mockReturnValue(of([entry]));
     component.load();
     expect(component.entries).toEqual([entry]);
     expect(component.statusLabel(entry)).toBe('Completada');
@@ -34,11 +34,11 @@ describe('ActivityListComponent', () => {
   });
 
   it('shows a safe message when activity cannot be loaded', () => {
-    auditLogs.listMine.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'Sin acceso' } })));
+    auditLogs.listPlatform.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'Sin acceso' } })));
     component.load();
     expect(component.error).toBe('Sin acceso');
 
-    auditLogs.listMine.mockReturnValue(of({}));
+    auditLogs.listPlatform.mockReturnValue(of({}));
     component.load();
     expect(component.entries).toEqual([]);
   });

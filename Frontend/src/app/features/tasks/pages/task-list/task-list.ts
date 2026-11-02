@@ -18,7 +18,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { finalize } from 'rxjs';
 
-import { Task } from '../../../../domain/task/task.model';
+import { RecurrenceFrequency, Task } from '../../../../domain/task/task.model';
 import { TaskService } from '../../../../infrastructure/tasks/task.service';
 
 import {
@@ -81,6 +81,13 @@ export class TaskListComponent implements OnInit {
   private readonly router =
     inject(Router);
 
+  /**
+   * The operational audit is restricted to developer accounts. Keeping this
+   * value in the component also prevents the navigation entry from being
+   * rendered for regular users.
+   */
+  readonly isDeveloper = this.authService.isDeveloper();
+
 
   // ============================================================
   // TAREAS
@@ -139,6 +146,19 @@ export class TaskListComponent implements OnInit {
       ],
 
       spaceId: [
+        '',
+      ],
+
+      recurrenceFrequency: [
+        '' as '' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA',
+      ],
+
+      recurrenceInterval: [
+        1,
+        [Validators.min(1), Validators.max(365)],
+      ],
+
+      recurrenceEndDate: [
         '',
       ],
 
@@ -224,6 +244,12 @@ export class TaskListComponent implements OnInit {
           Validators.maxLength(255),
         ],
       ],
+
+      recurrenceFrequency: ['' as RecurrenceFrequency | ''],
+
+      recurrenceInterval: [1, [Validators.min(1), Validators.max(365)]],
+
+      recurrenceEndDate: [''],
 
     });
 
@@ -440,6 +466,12 @@ export class TaskListComponent implements OnInit {
 
       spaceId: '',
 
+      recurrenceFrequency: '',
+
+      recurrenceInterval: 1,
+
+      recurrenceEndDate: '',
+
     });
   }
 
@@ -462,6 +494,14 @@ export class TaskListComponent implements OnInit {
       dueDate: '',
 
       priority: 'MEDIA',
+
+      spaceId: '',
+
+      recurrenceFrequency: '',
+
+      recurrenceInterval: 1,
+
+      recurrenceEndDate: '',
 
     });
   }
@@ -504,6 +544,15 @@ export class TaskListComponent implements OnInit {
 
         spaceId:
           formValue.spaceId ? Number(formValue.spaceId) : undefined,
+
+        recurrenceFrequency:
+          formValue.recurrenceFrequency || undefined,
+
+        recurrenceInterval:
+          formValue.recurrenceFrequency ? Number(formValue.recurrenceInterval) : undefined,
+
+        recurrenceEndDate:
+          formValue.recurrenceFrequency && formValue.recurrenceEndDate ? formValue.recurrenceEndDate : undefined,
 
       })
 
@@ -1122,6 +1171,12 @@ export class TaskListComponent implements OnInit {
 
       message: '',
 
+      recurrenceFrequency: '',
+
+      recurrenceInterval: 1,
+
+      recurrenceEndDate: '',
+
     });
   }
 
@@ -1201,6 +1256,15 @@ export class TaskListComponent implements OnInit {
 
       message:
         formValue.message,
+
+      recurrenceFrequency:
+        formValue.recurrenceFrequency || null,
+
+      recurrenceInterval:
+        formValue.recurrenceFrequency ? Number(formValue.recurrenceInterval || 1) : null,
+
+      recurrenceEndDate:
+        formValue.recurrenceFrequency ? formValue.recurrenceEndDate || null : null,
 
     };
 

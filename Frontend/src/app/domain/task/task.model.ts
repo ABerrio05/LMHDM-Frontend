@@ -1,4 +1,5 @@
 export type TaskPriority = 'ALTA' | 'MEDIA' | 'BAJA';
+export type RecurrenceFrequency = 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA';
 
 export type TaskStatus =
   | 'PENDIENTE'
@@ -23,6 +24,9 @@ export interface CreateTaskRequest {
   dueDate?: string;
   priority: TaskPriority;
   spaceId?: number;
+  recurrenceFrequency?: RecurrenceFrequency;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: string;
 }
 
 export interface UpdateTaskRequest {

@@ -1,0 +1,45 @@
+<main class="page">
+  <header class="page-header">
+    <div>
+      <span>NEXO · ASISTENTE</span>
+      <h1>Organiza tu día con IA</h1>
+      <p>Recibe una sugerencia a partir de tus tareas pendientes. NEXO envía solo el contexto necesario y nunca expone la clave del proveedor en el navegador.</p>
+    </div>
+    <nav>
+      <a routerLink="/tasks">Mis tareas</a>
+      <a routerLink="/planning">Planificación</a>
+      <a routerLink="/spaces">Espacios</a>
+      <a routerLink="/notes">Notas</a>
+    </nav>
+  </header>
+
+  <section class="panel">
+    <h2>¿En qué quieres ayuda?</h2>
+    <form [formGroup]="form" (ngSubmit)="requestSuggestion()">
+      <label for="question">Consulta</label>
+      <textarea id="question" formControlName="question" maxlength="800" rows="4"></textarea>
+      @if (form.controls.question.invalid && form.controls.question.touched) {
+        <small class="validation">Escribe una consulta de máximo 800 caracteres.</small>
+      }
+      <button type="submit" [disabled]="loading">{{ loading ? 'Analizando tareas...' : 'Generar sugerencia' }}</button>
+    </form>
+  </section>
+
+  @if (error) {
+    <section class="panel error"><strong>No se pudo consultar el asistente</strong><p>{{ error }}</p></section>
+  }
+
+  @if (suggestion; as result) {
+    <section class="panel result" [class.setup-needed]="!result.providerConfigured">
+      <div class="result-heading"><h2>Recomendación</h2><span>{{ result.providerConfigured ? 'IA generativa' : 'Plan automático local' }}</span></div>
+      <p class="answer">{{ result.answer }}</p>
+      @if (!result.providerConfigured) {
+        <p class="provider-note">La integración con un proveedor de IA está disponible para el despliegue, pero esta sesión usa el planificador local para no depender de una clave en el navegador.</p>
+      }
+      <h3>Acciones sugeridas</h3>
+      <ul>
+        @for (action of result.recommendedActions; track action) { <li>{{ action }}</li> }
+      </ul>
+    </section>
+  }
+</main>

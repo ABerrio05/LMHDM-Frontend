@@ -5,7 +5,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     pool: 'threads',
-    singleThread: true,
+    maxWorkers: 1,
+    minWorkers: 1,
     coverage: {
       reporter: ['text', 'html', 'lcov'],
     },

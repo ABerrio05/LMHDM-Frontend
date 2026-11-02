@@ -18,9 +18,9 @@ describe('AuditLogService', () => {
 
   afterEach(() => { http.verify(); TestBed.resetTestingModule(); });
 
-  it('requests only the authenticated users recent activity', () => {
-    service.listMine(20).subscribe(entries => expect(entries).toHaveLength(1));
-    const request = http.expectOne(`${environment.apiUrl}/audit-logs?limit=20`);
+  it('requests the recent platform logs from the developer endpoint', () => {
+    service.listPlatform(20).subscribe(entries => expect(entries).toHaveLength(1));
+    const request = http.expectOne(`${environment.apiUrl}/developer/audit-logs?limit=20`);
     expect(request.request.method).toBe('GET');
     request.flush([{ id: 1, userId: 7, action: 'POST /api/tasks', method: 'POST', path: '/api/tasks', statusCode: 201, durationMs: 12, requestId: 'request-1', createdAt: '2026-10-29T12:00:00' }]);
   });
