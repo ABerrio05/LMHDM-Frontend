@@ -3,9 +3,9 @@
     <div>
       <span>NEXO · ASISTENTE</span>
       <h1>Organiza tu día con IA</h1>
-      <p>Recibe una sugerencia a partir de tus tareas pendientes. NEXO envía solo el contexto necesario y nunca expone la clave del proveedor en el navegador.</p>
+      <p>Consulta tus prioridades y conserva el contexto de la conversación mientras mantengas abierto este apartado.</p>
     </div>
-    <nav>
+    <nav aria-label="Navegación principal">
       <a routerLink="/tasks">Mis tareas</a>
       <a routerLink="/planning">Planificación</a>
       <a routerLink="/spaces">Espacios</a>
@@ -13,33 +13,74 @@
     </nav>
   </header>
 
-  <section class="panel">
-    <h2>¿En qué quieres ayuda?</h2>
-    <form [formGroup]="form" (ngSubmit)="requestSuggestion()">
-      <label for="question">Consulta</label>
-      <textarea id="question" formControlName="question" maxlength="800" rows="4"></textarea>
-      @if (form.controls.question.invalid && form.controls.question.touched) {
-        <small class="validation">Escribe una consulta de máximo 800 caracteres.</small>
-      }
-      <button type="submit" [disabled]="loading">{{ loading ? 'Analizando tareas...' : 'Generar sugerencia' }}</button>
-    </form>
-  </section>
+  <section class="assistant-workspace" aria-label="Conversación con el asistente de IA">
+    <aside class="compose-panel">
+      <div class="panel-heading">
+        <span class="panel-kicker">NUEVA CONSULTA</span>
+        <h2>¿En qué quieres ayuda?</h2>
+        <p>Describe lo que necesitas organizar. El asistente usa el contexto de tus tareas pendientes.</p>
+      </div>
 
-  @if (error) {
-    <section class="panel error"><strong>No se pudo consultar el asistente</strong><p>{{ error }}</p></section>
-  }
+      <form [formGroup]="form" (ngSubmit)="requestSuggestion()">
+        <label for="question">Tu mensaje</label>
+        <textarea id="question" formControlName="question" maxlength="800" rows="9" placeholder="Ej. Tengo varias entregas esta semana, ¿por cuál debería empezar?"></textarea>
+        <div class="form-footer">
+          <small>{{ form.controls.question.value.length }}/800</small>
+          @if (form.controls.question.invalid && form.controls.question.touched) {
+            <small class="validation">Escribe una consulta de máximo 800 caracteres.</small>
+          }
+        </div>
+        <button type="submit" [disabled]="loading">
+          {{ loading ? 'Analizando…' : 'Enviar al asistente' }}
+        </button>
+      </form>
 
-  @if (suggestion; as result) {
-    <section class="panel result" [class.setup-needed]="!result.providerConfigured">
-      <div class="result-heading"><h2>Recomendación</h2><span>{{ result.providerConfigured ? 'IA generativa' : 'Plan automático local' }}</span></div>
-      <p class="answer">{{ result.answer }}</p>
-      @if (!result.providerConfigured) {
-        <p class="provider-note">La integración con un proveedor de IA está disponible para el despliegue, pero esta sesión usa el planificador local para no depender de una clave en el navegador.</p>
+      <p class="temporary-note">Esta conversación es temporal: se conserva solo mientras este apartado permanezca abierto.</p>
+    </aside>
+
+    <section class="chat-panel" aria-live="polite">
+      <div class="chat-header">
+        <div>
+          <span class="panel-kicker">CONVERSACIÓN</span>
+          <h2>Tu sesión con NEXO IA</h2>
+        </div>
+        @if (messages.length > 0) {
+          <button type="button" class="clear-button" (click)="clearConversation()" [disabled]="loading">Limpiar chat</button>
+        }
+      </div>
+
+      @if (messages.length === 0) {
+        <div class="empty-chat">
+          <span class="empty-icon" aria-hidden="true">✦</span>
+          <h3>La conversación comenzará aquí</h3>
+          <p>Envía una consulta desde el panel izquierdo. Tus preguntas y recomendaciones se mantendrán visibles durante esta sesión.</p>
+        </div>
+      } @else {
+        <div class="message-list">
+          @for (message of messages; track message.id) {
+            <article class="message" [class.user-message]="message.role === 'user'" [class.error-message]="message.role === 'error'">
+              <div class="message-meta">
+                <span class="avatar" aria-hidden="true">{{ message.role === 'user' ? 'TÚ' : 'IA' }}</span>
+                <strong>{{ message.role === 'user' ? 'Tú' : message.role === 'error' ? 'Asistente · error' : 'NEXO IA' }}</strong>
+                @if (message.pending) { <span class="pending">Pensando…</span> }
+              </div>
+              <p class="message-text">{{ message.text }}</p>
+
+              @if (message.role === 'assistant' && !message.pending) {
+                @if (message.providerConfigured === false) {
+                  <p class="provider-note">Esta respuesta usa el planificador local porque el proveedor de IA no está disponible en esta sesión.</p>
+                }
+                @if (message.recommendedActions?.length) {
+                  <h3>Acciones sugeridas</h3>
+                  <ul>
+                    @for (action of message.recommendedActions; track action) { <li>{{ action }}</li> }
+                  </ul>
+                }
+              }
+            </article>
+          }
+        </div>
       }
-      <h3>Acciones sugeridas</h3>
-      <ul>
-        @for (action of result.recommendedActions; track action) { <li>{{ action }}</li> }
-      </ul>
     </section>
-  }
+  </section>
 </main>
