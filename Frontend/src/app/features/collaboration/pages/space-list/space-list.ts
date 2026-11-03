@@ -11,6 +11,7 @@ import {
 } from '../../../../domain/collaboration/collaborative-space.model';
 import { Task } from '../../../../domain/task/task.model';
 import { CollaborativeSpaceService } from '../../../../infrastructure/collaboration/collaborative-space.service';
+import { TaskService } from '../../../../infrastructure/tasks/task.service';
 
 @Component({
   selector: 'app-space-list',
@@ -23,6 +24,7 @@ export class SpaceListComponent implements OnInit {
   private readonly spacesService = inject(CollaborativeSpaceService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly taskService = inject(TaskService);
 
   spaces: CollaborativeSpace[] = [];
   members: Record<number, SpaceMember[]> = {};
@@ -33,6 +35,7 @@ export class SpaceListComponent implements OnInit {
   creating = false;
   inviting = false;
   savingEdit = false;
+  creatingTaskForSpaceId: number | null = null;
   deletingSpaceId: number | null = null;
   error = '';
   feedback = '';
@@ -50,6 +53,13 @@ export class SpaceListComponent implements OnInit {
   readonly editForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(150)]],
     description: ['', Validators.maxLength(500)],
+  });
+
+  readonly spaceTaskForm = this.formBuilder.nonNullable.group({
+    title: ['', [Validators.required, Validators.maxLength(255)]],
+    description: ['', Validators.maxLength(2_000)],
+    dueDate: [''],
+    priority: ['MEDIA' as const, Validators.required],
   });
 
   ngOnInit(): void {
@@ -223,6 +233,37 @@ export class SpaceListComponent implements OnInit {
           this.refreshView();
         },
       });
+  }
+
+  createTaskInSpace(spaceId: number): void {
+    if (this.spaceTaskForm.invalid || this.creatingTaskForSpaceId !== null) {
+      this.spaceTaskForm.markAllAsTouched();
+      return;
+    }
+    this.creatingTaskForSpaceId = spaceId;
+    this.error = '';
+    const value = this.spaceTaskForm.getRawValue();
+    this.taskService.createTask({
+      title: value.title.trim(),
+      description: value.description.trim() || undefined,
+      dueDate: value.dueDate || undefined,
+      priority: value.priority,
+      spaceId,
+    }).pipe(finalize(() => {
+      this.creatingTaskForSpaceId = null;
+      this.refreshView();
+    })).subscribe({
+      next: task => {
+        this.spaceTasks[spaceId] = [task, ...(this.spaceTasks[spaceId] ?? [])];
+        this.spaceTaskForm.reset({ title: '', description: '', dueDate: '', priority: 'MEDIA' });
+        this.feedback = 'Tarea creada y vinculada al espacio.';
+        this.refreshView();
+      },
+      error: error => {
+        this.error = this.messageFrom(error, 'No se pudo crear la tarea del espacio.');
+        this.refreshView();
+      },
+    });
   }
 
   private messageFrom(error: unknown, fallback: string): string {

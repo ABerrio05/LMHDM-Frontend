@@ -1,7 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -10,7 +10,7 @@ import { PersonalNoteService } from '../../../../infrastructure/notes/personal-n
 
 @Component({
   selector: 'app-note-list', standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, DatePipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe],
   templateUrl: './note-list.html', styleUrl: './note-list.scss',
 })
 export class NoteListComponent implements OnInit {
@@ -18,12 +18,21 @@ export class NoteListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly changeDetector = inject(ChangeDetectorRef);
   notes: PersonalNote[] = [];
+  searchTerm = '';
   loading = false; saving = false; error = ''; editingId: number | null = null;
   readonly noteForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
     content: ['', [Validators.required, Validators.maxLength(10_000)]],
   });
   ngOnInit(): void { this.load(); }
+
+  get filteredNotes(): PersonalNote[] {
+    const search = this.searchTerm.trim().toLocaleLowerCase();
+    if (!search) return this.notes;
+    return this.notes.filter(note => `${note.title} ${note.content}`.toLocaleLowerCase().includes(search));
+  }
+
+  clearSearch(): void { this.searchTerm = ''; }
   load(): void {
     this.loading = true; this.error = '';
     this.notesService.list().pipe(finalize(() => {

@@ -5,19 +5,23 @@ import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CollaborativeSpaceService } from '../../../../infrastructure/collaboration/collaborative-space.service';
+import { TaskService } from '../../../../infrastructure/tasks/task.service';
 import { SpaceListComponent } from './space-list';
 
 describe('SpaceListComponent', () => {
   const spacesService = {
     listMine: vi.fn(), create: vi.fn(), listMembers: vi.fn(), listTasks: vi.fn(), invite: vi.fn(),
   };
+  const taskService = { createTask: vi.fn() };
   const space = { id: 4, name: 'Equipo NEXO', description: 'Planeación', creatorId: 7, createdAt: '2026-10-29T12:00:00' };
   let component: SpaceListComponent;
 
   beforeEach(() => {
     Object.values(spacesService).forEach(mock => mock.mockReset());
+    taskService.createTask.mockReset();
     TestBed.configureTestingModule({ providers: [
       { provide: CollaborativeSpaceService, useValue: spacesService },
+      { provide: TaskService, useValue: taskService },
       { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
     ] });
     component = TestBed.runInInjectionContext(() => new SpaceListComponent());
@@ -86,5 +90,17 @@ describe('SpaceListComponent', () => {
     spacesService.invite.mockReturnValue(throwError(() => new Error('offline')));
     component.invite(4);
     expect(component.error).toBe('No se pudo agregar el integrante.');
+  });
+
+  it('creates a task directly in the selected space', () => {
+    const task = { id: 20, title: 'Preparar demo', description: null, dueDate: null, priority: 'MEDIA' as const, status: 'PENDIENTE' as const, ownerId: 7, spaceId: 4, recurrenceId: null };
+    taskService.createTask.mockReturnValue(of(task));
+    component.spaceTaskForm.setValue({ title: ' Preparar demo ', description: '', dueDate: '', priority: 'MEDIA' });
+
+    component.createTaskInSpace(4);
+
+    expect(taskService.createTask).toHaveBeenCalledWith({ title: 'Preparar demo', description: undefined, dueDate: undefined, priority: 'MEDIA', spaceId: 4 });
+    expect(component.spaceTasks[4]).toEqual([task]);
+    expect(component.feedback).toContain('vinculada al espacio');
   });
 });

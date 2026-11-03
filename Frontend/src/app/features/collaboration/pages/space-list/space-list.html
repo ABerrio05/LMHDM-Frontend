@@ -36,7 +36,7 @@
           <p>{{ space.description || 'Sin descripción.' }}</p>
           <div class="space-actions">
             <button type="button" class="secondary" (click)="toggleMembers(space.id)">
-              {{ expandedSpaceId === space.id ? 'Ocultar integrantes' : 'Ver e invitar integrantes' }}
+              {{ expandedSpaceId === space.id ? 'Cerrar detalle' : 'Abrir espacio de trabajo' }}
             </button>
             <button type="button" class="secondary" (click)="startEdit(space)">Editar</button>
             <button type="button" class="danger" [disabled]="deletingSpaceId === space.id" (click)="deleteSpace(space)">
@@ -56,8 +56,9 @@
           }
 
           @if (expandedSpaceId === space.id) {
-            <div class="members">
-              <h3>Integrantes</h3>
+            <div class="workspace-detail">
+              <div class="detail-heading"><div><span class="space-id">PANEL DEL EQUIPO</span><h3>{{ space.name }}</h3><p>Consulta tareas compartidas, crea nuevas y coordina integrantes desde un solo lugar.</p></div></div>
+              <section class="detail-section"><h3>Integrantes</h3>
               @if ((members[space.id] ?? []).length === 0) { <p>Aún no hay integrantes cargados.</p> }
               @else {
                 <ul>
@@ -72,16 +73,19 @@
                 <button type="submit" [disabled]="inviting">{{ inviting ? 'Agregando...' : 'Agregar integrante' }}</button>
               </form>
 
-              <h3 class="space-tasks-title">Tareas del espacio</h3>
+              </section>
+              <section class="detail-section tasks-section"><div class="tasks-heading"><div><span class="space-id">TRABAJO COMPARTIDO</span><h3>Tareas del espacio</h3></div><span class="task-count">{{ (spaceTasks[space.id] ?? []).length }} tareas</span></div>
               @if ((spaceTasks[space.id] ?? []).length === 0) {
-                <p>No hay tareas asignadas todavía. Crea una desde “Mis tareas” y selecciona este espacio.</p>
+                <p>No hay tareas asignadas todavía. Crea la primera aquí mismo.</p>
               } @else {
                 <ul class="space-tasks">
                   @for (task of spaceTasks[space.id]; track task.id) {
-                    <li><strong>{{ task.title }}</strong><span>{{ task.status }} · {{ task.priority }}</span></li>
+                    <li><div><strong>{{ task.title }}</strong><small>{{ task.description || 'Sin descripción.' }}</small><em>Creada por usuario #{{ task.ownerId }}</em></div><span>{{ task.status }} · {{ task.priority }}@if (task.dueDate) { · vence {{ task.dueDate }} }</span></li>
                   }
                 </ul>
               }
+              <form [formGroup]="spaceTaskForm" (ngSubmit)="createTaskInSpace(space.id)" class="task-form"><h4>Crear tarea en este espacio</h4><label>Título<input type="text" formControlName="title" placeholder="Ej. Preparar la presentación" /></label><label>Descripción<input type="text" formControlName="description" placeholder="Detalle opcional" /></label><label>Fecha límite<input type="date" formControlName="dueDate" /></label><label>Prioridad<select formControlName="priority"><option value="ALTA">Alta</option><option value="MEDIA">Media</option><option value="BAJA">Baja</option></select></label><button type="submit" [disabled]="creatingTaskForSpaceId !== null">{{ creatingTaskForSpaceId === space.id ? 'Creando...' : 'Crear tarea compartida' }}</button></form>
+              </section>
             </div>
           }
         </article>

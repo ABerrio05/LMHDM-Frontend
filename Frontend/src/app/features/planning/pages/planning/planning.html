@@ -1,14 +1,19 @@
 <main class="page">
   <header class="page-header">
-    <div><span> NEXO · PLANIFICACIÓN</span><h1>Próximos festivos de Colombia</h1><p>Consulta fechas útiles antes de definir entregas, tareas y recordatorios.</p></div>
+    <div><span>NEXO · PLANIFICACIÓN</span><h1>Planifica con tiempo</h1><p>Consulta festivos oficiales antes de definir entregas, tareas y recordatorios.</p></div>
     <nav><a routerLink="/tasks">Mis tareas y recordatorios</a><a routerLink="/spaces">Espacios colaborativos</a><a routerLink="/notes">Notas</a><a routerLink="/assistant">Asistente IA</a></nav>
   </header>
   <section class="panel">
-    <h2>Calendario externo integrado</h2>
-    <p>Los datos se consultan desde la API pública Nager.Date por medio del backend de NEXO; la aplicación no expone la comunicación externa directamente al navegador.</p>
+    <div class="panel-heading"><div><span class="section-label">CALENDARIO EXTERNO</span><h2>Festivos de Colombia</h2><p>Información consultada por NEXO desde Nager.Date, sin exponer la API externa al navegador.</p></div>
+      @if (!loading && !error && holidays.length) { <label class="month-picker">Buscar por mes<select [value]="selectedMonth" (change)="selectMonth($any($event.target).value)">@for (month of availableMonths; track month) { <option [value]="month">{{ month }}</option> }</select></label> }
+    </div>
     @if (loading) { <p>Cargando festivos...</p> }
     @else if (error) { <div class="error"><p>{{ error }}</p><button type="button" (click)="loadHolidays()">Reintentar</button></div> }
     @else if (holidays.length === 0) { <p>No se encontraron próximos festivos.</p> }
-    @else { <div class="holiday-grid">@for (holiday of holidays; track holiday.date + holiday.localName) { <article><time>{{ holiday.date | date:'dd MMM yyyy' }}</time><strong>{{ holiday.localName }}</strong><small>Colombia</small></article> }</div> }
+    @else {
+      <section class="upcoming" aria-label="Próximos festivos"><div><span class="section-label">PRÓXIMOS FESTIVOS</span><h3>Fechas que debes tener presentes</h3></div><div class="upcoming-list">@for (holiday of upcomingHolidays; track holiday.date) { <article><time>{{ holiday.date.slice(8, 10) }}/{{ holiday.date.slice(5, 7) }}</time><div><strong>{{ holiday.localName }}</strong><small>{{ holiday.date }}</small></div></article> }</div></section>
+      <section class="calendar" aria-label="Calendario de {{ selectedMonthLabel }}"><div class="calendar-title"><span class="section-label">VISTA DE CALENDARIO</span><h3>{{ selectedMonthLabel }}</h3></div><div class="weekdays"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div><div class="calendar-grid">@for (day of calendarDays; track $index) { <div class="calendar-day" [class.empty]="!day.label" [class.holiday]="day.holiday"><span>{{ day.label }}</span>@if (day.holiday) { <small>{{ day.holiday.localName }}</small> }</div> }</div></section>
+      <p class="source-note">Se muestran los próximos festivos disponibles en el proveedor externo.</p>
+    }
   </section>
 </main>
