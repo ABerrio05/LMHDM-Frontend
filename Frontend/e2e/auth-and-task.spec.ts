@@ -43,6 +43,24 @@ test('a user can register, create a task and save a personal note', async ({ pag
   await expect((await noteResponse).status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Nota creada por E2E' })).toBeVisible({ timeout: 30_000 });
 
+  const spacesResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/spaces') && response.request().method() === 'GET',
+    { timeout: 30_000 },
+  );
+  await page.getByRole('link', { name: 'Espacios' }).click();
+  await expect(page).toHaveURL(/\/spaces$/);
+  await expect((await spacesResponse).status()).toBe(200);
+  await expect(page.getByRole('heading', { name: 'Espacios colaborativos' })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Nombre' }).fill('Espacio creado por E2E');
+  await page.getByRole('textbox', { name: 'Descripción' }).fill('Carga de espacios verificada desde el navegador.');
+  const createSpaceResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/spaces') && response.request().method() === 'POST',
+    { timeout: 30_000 },
+  );
+  await page.getByRole('button', { name: 'Crear espacio' }).click();
+  await expect((await createSpaceResponse).status()).toBe(201);
+  await expect(page.getByRole('heading', { name: 'Espacio creado por E2E' })).toBeVisible({ timeout: 30_000 });
+
   const holidaysResponse = page.waitForResponse(
     (response) => response.url().includes('/api/calendar/holidays/colombia') && response.request().method() === 'GET',
     { timeout: 30_000 },
