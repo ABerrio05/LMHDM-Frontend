@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -18,6 +18,7 @@ import { TaskAssistantService } from '../../../../infrastructure/assistant/task-
 export class TaskAssistantComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly assistant = inject(TaskAssistantService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   readonly form = this.formBuilder.nonNullable.group({
     question: ['¿Qué tareas debería priorizar hoy?', [Validators.required, Validators.maxLength(800)]],
@@ -36,10 +37,19 @@ export class TaskAssistantComponent {
     this.error = '';
     this.suggestion = null;
     this.assistant.suggest(this.form.getRawValue().question.trim())
-      .pipe(finalize(() => { this.loading = false; }))
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.changeDetector.markForCheck();
+      }))
       .subscribe({
-        next: suggestion => { this.suggestion = suggestion; },
-        error: error => { this.error = this.messageFrom(error); },
+        next: suggestion => {
+          this.suggestion = suggestion;
+          this.changeDetector.markForCheck();
+        },
+        error: error => {
+          this.error = this.messageFrom(error);
+          this.changeDetector.markForCheck();
+        },
       });
   }
 

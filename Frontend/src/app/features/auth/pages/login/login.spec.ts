@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -18,6 +19,7 @@ describe('LoginComponent', () => {
       providers: [
         { provide: AuthService, useValue: authService },
         { provide: Router, useValue: router },
+        { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
       ],
     });
     component = TestBed.runInInjectionContext(() => new LoginComponent());

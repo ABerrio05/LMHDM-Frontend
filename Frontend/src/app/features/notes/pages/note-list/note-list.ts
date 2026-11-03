@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -16,6 +16,7 @@ import { PersonalNoteService } from '../../../../infrastructure/notes/personal-n
 export class NoteListComponent implements OnInit {
   private readonly notesService = inject(PersonalNoteService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   notes: PersonalNote[] = [];
   loading = false; saving = false; error = ''; editingId: number | null = null;
   readonly noteForm = this.formBuilder.nonNullable.group({
@@ -25,9 +26,18 @@ export class NoteListComponent implements OnInit {
   ngOnInit(): void { this.load(); }
   load(): void {
     this.loading = true; this.error = '';
-    this.notesService.list().pipe(finalize(() => this.loading = false)).subscribe({
-      next: notes => this.notes = Array.isArray(notes) ? notes : [],
-      error: error => this.error = this.message(error, 'No se pudieron cargar tus notas.'),
+    this.notesService.list().pipe(finalize(() => {
+      this.loading = false;
+      this.changeDetector.markForCheck();
+    })).subscribe({
+      next: notes => {
+        this.notes = Array.isArray(notes) ? notes : [];
+        this.changeDetector.markForCheck();
+      },
+      error: error => {
+        this.error = this.message(error, 'No se pudieron cargar tus notas.');
+        this.changeDetector.markForCheck();
+      },
     });
   }
   save(): void {
@@ -36,13 +46,20 @@ export class NoteListComponent implements OnInit {
     const action = this.editingId === null
       ? this.notesService.create(request)
       : this.notesService.update(this.editingId, request);
-    action.pipe(finalize(() => this.saving = false)).subscribe({
+    action.pipe(finalize(() => {
+      this.saving = false;
+      this.changeDetector.markForCheck();
+    })).subscribe({
       next: note => {
         this.notes = this.editingId === null ? [note, ...this.notes]
           : this.notes.map(current => current.id === note.id ? note : current);
         this.cancelEdit();
+        this.changeDetector.markForCheck();
       },
-      error: error => this.error = this.message(error, 'No se pudo guardar la nota.'),
+      error: error => {
+        this.error = this.message(error, 'No se pudo guardar la nota.');
+        this.changeDetector.markForCheck();
+      },
     });
   }
   edit(note: PersonalNote): void { this.editingId = note.id; this.noteForm.setValue({ title: note.title, content: note.content }); }
@@ -50,8 +67,14 @@ export class NoteListComponent implements OnInit {
   delete(note: PersonalNote): void {
     if (!confirm(`¿Eliminar la nota “${note.title}”?`)) return;
     this.notesService.delete(note.id).subscribe({
-      next: () => this.notes = this.notes.filter(current => current.id !== note.id),
-      error: error => this.error = this.message(error, 'No se pudo eliminar la nota.'),
+      next: () => {
+        this.notes = this.notes.filter(current => current.id !== note.id);
+        this.changeDetector.markForCheck();
+      },
+      error: error => {
+        this.error = this.message(error, 'No se pudo eliminar la nota.');
+        this.changeDetector.markForCheck();
+      },
     });
   }
   private message(error: unknown, fallback: string): string {

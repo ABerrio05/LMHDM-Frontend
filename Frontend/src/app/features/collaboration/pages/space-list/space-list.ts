@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -22,6 +22,7 @@ import { CollaborativeSpaceService } from '../../../../infrastructure/collaborat
 export class SpaceListComponent implements OnInit {
   private readonly spacesService = inject(CollaborativeSpaceService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   spaces: CollaborativeSpace[] = [];
   members: Record<number, SpaceMember[]> = {};
@@ -58,9 +59,18 @@ export class SpaceListComponent implements OnInit {
   loadSpaces(): void {
     this.loading = true;
     this.error = '';
-    this.spacesService.listMine().pipe(finalize(() => this.loading = false)).subscribe({
-      next: spaces => this.spaces = Array.isArray(spaces) ? spaces : [],
-      error: () => this.error = 'No se pudieron cargar tus espacios colaborativos.',
+    this.spacesService.listMine().pipe(finalize(() => {
+      this.loading = false;
+      this.refreshView();
+    })).subscribe({
+      next: spaces => {
+        this.spaces = Array.isArray(spaces) ? spaces : [];
+        this.refreshView();
+      },
+      error: () => {
+        this.error = 'No se pudieron cargar tus espacios colaborativos.';
+        this.refreshView();
+      },
     });
   }
 
@@ -73,14 +83,21 @@ export class SpaceListComponent implements OnInit {
     this.feedback = '';
     const value = this.spaceForm.getRawValue();
     this.spacesService.create({ name: value.name.trim(), description: value.description.trim() || undefined })
-      .pipe(finalize(() => this.creating = false))
+      .pipe(finalize(() => {
+        this.creating = false;
+        this.refreshView();
+      }))
       .subscribe({
         next: space => {
           this.spaces = [...this.spaces, space];
           this.spaceForm.reset({ name: '', description: '' });
           this.feedback = 'Espacio creado. Ya puedes invitar integrantes.';
+          this.refreshView();
         },
-        error: error => this.error = this.messageFrom(error, 'No se pudo crear el espacio.'),
+        error: error => {
+          this.error = this.messageFrom(error, 'No se pudo crear el espacio.');
+          this.refreshView();
+        },
       });
   }
 
@@ -92,12 +109,24 @@ export class SpaceListComponent implements OnInit {
     this.expandedSpaceId = spaceId;
     this.feedback = '';
     this.spacesService.listMembers(spaceId).subscribe({
-      next: members => this.members[spaceId] = Array.isArray(members) ? members : [],
-      error: error => this.error = this.messageFrom(error, 'No se pudieron consultar los integrantes.'),
+      next: members => {
+        this.members[spaceId] = Array.isArray(members) ? members : [];
+        this.refreshView();
+      },
+      error: error => {
+        this.error = this.messageFrom(error, 'No se pudieron consultar los integrantes.');
+        this.refreshView();
+      },
     });
     this.spacesService.listTasks(spaceId).subscribe({
-      next: tasks => this.spaceTasks[spaceId] = Array.isArray(tasks) ? tasks : [],
-      error: () => this.spaceTasks[spaceId] = [],
+      next: tasks => {
+        this.spaceTasks[spaceId] = Array.isArray(tasks) ? tasks : [];
+        this.refreshView();
+      },
+      error: () => {
+        this.spaceTasks[spaceId] = [];
+        this.refreshView();
+      },
     });
   }
 
@@ -122,14 +151,21 @@ export class SpaceListComponent implements OnInit {
     this.error = '';
     const value = this.editForm.getRawValue();
     this.spacesService.update(spaceId, { name: value.name.trim(), description: value.description.trim() || undefined })
-      .pipe(finalize(() => this.savingEdit = false))
+      .pipe(finalize(() => {
+        this.savingEdit = false;
+        this.refreshView();
+      }))
       .subscribe({
         next: updated => {
           this.spaces = this.spaces.map(space => space.id === spaceId ? updated : space);
           this.cancelEdit();
           this.feedback = 'Espacio actualizado correctamente.';
+          this.refreshView();
         },
-        error: error => this.error = this.messageFrom(error, 'No se pudo actualizar el espacio. Solo un administrador puede editarlo.'),
+        error: error => {
+          this.error = this.messageFrom(error, 'No se pudo actualizar el espacio. Solo un administrador puede editarlo.');
+          this.refreshView();
+        },
       });
   }
 
@@ -141,7 +177,10 @@ export class SpaceListComponent implements OnInit {
     this.error = '';
     this.feedback = '';
     this.spacesService.delete(space.id)
-      .pipe(finalize(() => this.deletingSpaceId = null))
+      .pipe(finalize(() => {
+        this.deletingSpaceId = null;
+        this.refreshView();
+      }))
       .subscribe({
         next: () => {
           this.spaces = this.spaces.filter(item => item.id !== space.id);
@@ -150,8 +189,12 @@ export class SpaceListComponent implements OnInit {
           if (this.expandedSpaceId === space.id) this.expandedSpaceId = null;
           if (this.editingSpaceId === space.id) this.cancelEdit();
           this.feedback = 'Espacio eliminado. Sus tareas quedaron disponibles como tareas personales.';
+          this.refreshView();
         },
-        error: error => this.error = this.messageFrom(error, 'No se pudo eliminar el espacio. Solo un administrador puede eliminarlo.'),
+        error: error => {
+          this.error = this.messageFrom(error, 'No se pudo eliminar el espacio. Solo un administrador puede eliminarlo.');
+          this.refreshView();
+        },
       });
   }
 
@@ -164,19 +207,30 @@ export class SpaceListComponent implements OnInit {
     this.feedback = '';
     const value = this.inviteForm.getRawValue();
     this.spacesService.invite(spaceId, { email: value.email.trim(), role: value.role })
-      .pipe(finalize(() => this.inviting = false))
+      .pipe(finalize(() => {
+        this.inviting = false;
+        this.refreshView();
+      }))
       .subscribe({
         next: member => {
           this.members[spaceId] = [...(this.members[spaceId] ?? []), member];
           this.inviteForm.reset({ email: '', role: 'MIEMBRO' });
           this.feedback = 'Integrante agregado al espacio.';
+          this.refreshView();
         },
-        error: error => this.error = this.messageFrom(error, 'No se pudo agregar el integrante.'),
+        error: error => {
+          this.error = this.messageFrom(error, 'No se pudo agregar el integrante.');
+          this.refreshView();
+        },
       });
   }
 
   private messageFrom(error: unknown, fallback: string): string {
     const response = error instanceof HttpErrorResponse ? error.error : undefined;
     return response?.message || fallback;
+  }
+
+  private refreshView(): void {
+    this.changeDetector.markForCheck();
   }
 }

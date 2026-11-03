@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -21,6 +21,7 @@ export class RegisterComponent {
 
   // Debe ser público porque register.html lo utiliza.
   readonly router = inject(Router);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   readonly registerForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -45,6 +46,7 @@ export class RegisterComponent {
     this.authService.register(request).subscribe({
       next: () => {
         this.isLoading = false;
+          this.changeDetector.markForCheck();
 
         void this.router.navigate(['/tasks']);
       },
@@ -62,6 +64,7 @@ export class RegisterComponent {
         }
 
         this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
     });
   }

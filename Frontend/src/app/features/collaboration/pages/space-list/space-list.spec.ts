@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,7 +16,10 @@ describe('SpaceListComponent', () => {
 
   beforeEach(() => {
     Object.values(spacesService).forEach(mock => mock.mockReset());
-    TestBed.configureTestingModule({ providers: [{ provide: CollaborativeSpaceService, useValue: spacesService }] });
+    TestBed.configureTestingModule({ providers: [
+      { provide: CollaborativeSpaceService, useValue: spacesService },
+      { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
+    ] });
     component = TestBed.runInInjectionContext(() => new SpaceListComponent());
   });
 

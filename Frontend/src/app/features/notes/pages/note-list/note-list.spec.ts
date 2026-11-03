@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,7 +14,10 @@ describe('NoteListComponent', () => {
 
   beforeEach(() => {
     Object.values(notesService).forEach(mock => mock.mockReset());
-    TestBed.configureTestingModule({ providers: [{ provide: PersonalNoteService, useValue: notesService }] });
+    TestBed.configureTestingModule({ providers: [
+      { provide: PersonalNoteService, useValue: notesService },
+      { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
+    ] });
     component = TestBed.runInInjectionContext(() => new NoteListComponent());
   });
 

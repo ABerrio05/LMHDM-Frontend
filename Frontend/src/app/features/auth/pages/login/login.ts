@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -22,6 +22,7 @@ export class LoginComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   readonly loginForm = this.formBuilder.nonNullable.group({
     email: [
@@ -58,6 +59,7 @@ export class LoginComponent {
       .subscribe({
         next: () => {
           this.isLoading = false;
+          this.changeDetector.markForCheck();
 
           void this.router.navigate(['/tasks']);
         },
@@ -67,6 +69,7 @@ export class LoginComponent {
             'No fue posible iniciar sesión.';
 
           this.isLoading = false;
+          this.changeDetector.markForCheck();
         },
       });
   }
