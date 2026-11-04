@@ -59,6 +59,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'settings/notifications',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/settings/pages/notification-preferences/notification-preferences').then(
+        (m) => m.NotificationPreferencesComponent
+      ),
+  },
+  {
     path: 'developer/logs',
     canActivate: [authGuard, developerGuard],
     loadComponent: () =>

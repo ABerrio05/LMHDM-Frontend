@@ -1,0 +1,13 @@
+.preferences-page { width: min(980px, calc(100% - 40px)); margin: 0 auto; padding: 48px 0 80px; color: #16213d; }
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 28px; margin-bottom: 34px; }
+.eyebrow { display: block; color: #2563eb; font-size: 12px; font-weight: 900; letter-spacing: 2px; }
+h1 { margin: 8px 0; font-size: clamp(30px, 5vw, 44px); } h2 { margin: 8px 0 12px; font-size: 26px; }
+header p, .description, .always-on, small { color: #64748b; line-height: 1.65; } header p { margin: 0; }
+nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; } nav a { padding: 9px 12px; border: 1px solid #cbdcf7; border-radius: 9px; color: #2563eb; font-weight: 700; text-decoration: none; }
+.preferences-card { max-width: 680px; padding: 32px; border: 1px solid #dbe7f5; border-radius: 20px; background: #fff; box-shadow: 0 16px 38px rgb(15 23 42 / 8%); }
+.switch-row { display: flex; align-items: center; gap: 16px; margin: 26px 0 18px; padding: 18px; border-radius: 13px; background: #f5f9ff; cursor: pointer; }
+.switch-row input { width: 22px; height: 22px; accent-color: #2563eb; } .switch-row strong, .switch-row small { display: block; } .switch-row small { margin-top: 4px; }
+.always-on { padding: 14px 16px; border-left: 4px solid #8b5cf6; background: #faf5ff; }
+button { margin-top: 12px; padding: 12px 18px; border: 0; border-radius: 9px; background: #2563eb; color: #fff; font-weight: 800; cursor: pointer; } button:disabled { opacity: .65; cursor: wait; }
+.feedback { margin: 16px 0 0; font-weight: 700; }.error { color: #b91c1c; }.success { color: #047857; }.state { color: #64748b; }
+@media (max-width: 700px) { header { flex-direction: column; } nav { justify-content: flex-start; }.preferences-card { padding: 23px; } }

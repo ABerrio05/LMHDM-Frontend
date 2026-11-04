@@ -1,0 +1,28 @@
+<main class="preferences-page">
+  <header>
+    <div>
+      <span class="eyebrow">NEXO · CONFIGURACIÓN</span>
+      <h1>Notificaciones por correo</h1>
+      <p>Decide qué avisos informativos quieres recibir.</p>
+    </div>
+    <nav aria-label="Módulos de NEXO">
+      <a routerLink="/tasks">Mis tareas</a><a routerLink="/spaces">Espacios</a><a routerLink="/planning">Planificación</a><a routerLink="/notes">Notas</a><a routerLink="/assistant">Asistente IA</a>
+    </nav>
+  </header>
+
+  <section class="preferences-card">
+    <span class="eyebrow">PREFERENCIAS PERSONALES</span>
+    <h2>Actividad en NEXO</h2>
+    <p class="description">Recibe confirmaciones al crear tareas o espacios y novedades de las tareas compartidas con tu equipo.</p>
+    @if (loading) { <p class="state">Cargando preferencias...</p> } @else {
+      <label class="switch-row">
+        <input type="checkbox" [(ngModel)]="activityEmailsEnabled" />
+        <span><strong>Recibir correos de actividad</strong><small>Te avisaremos de creaciones y avances en espacios compartidos.</small></span>
+      </label>
+      <p class="always-on"><strong>Siempre activos:</strong> las invitaciones a espacios y los recordatorios programados se enviarán aunque desactives esta opción.</p>
+      @if (error) { <p class="feedback error">{{ error }}</p> }
+      @if (message) { <p class="feedback success">{{ message }}</p> }
+      <button type="button" (click)="save()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar preferencias' }}</button>
+    }
+  </section>
+</main>
