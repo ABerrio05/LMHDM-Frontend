@@ -10,14 +10,18 @@ import { TaskAssistantComponent } from './task-assistant';
 
 describe('TaskAssistantComponent', () => {
   const assistant = { suggest: vi.fn() };
-  const tasks = { createTask: vi.fn() };
-  const notes = { create: vi.fn() };
+  const tasks = { createTask: vi.fn(), updateTask: vi.fn(), deleteTask: vi.fn() };
+  const notes = { create: vi.fn(), update: vi.fn(), delete: vi.fn() };
   let component: TaskAssistantComponent;
 
   beforeEach(() => {
     assistant.suggest.mockReset();
     tasks.createTask.mockReset();
+    tasks.updateTask.mockReset();
+    tasks.deleteTask.mockReset();
     notes.create.mockReset();
+    notes.update.mockReset();
+    notes.delete.mockReset();
     TestBed.configureTestingModule({
       providers: [
         { provide: TaskAssistantService, useValue: assistant },
@@ -79,9 +83,20 @@ describe('TaskAssistantComponent', () => {
     tasks.createTask.mockReturnValue(of({ id: 3 }));
     component.messages = [{ id: 1, role: 'assistant', text: 'Propuesta' }];
 
-    component.executeProposedAction(1, { type: 'TASK', title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06', priority: 'ALTA' });
+    component.executeProposedAction(1, { type: 'TASK_CREATE', targetId: null, title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06', priority: 'ALTA' });
 
     expect(tasks.createTask).toHaveBeenCalledWith({ title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06T09:00', priority: 'ALTA' });
-    expect(component.messages[0].executionMessage).toContain('Tarea creada');
+    expect(component.messages[0].executionMessage).toContain('Crear tarea');
+  });
+
+  it('deletes only the task ID proposed by the assistant after confirmation', () => {
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
+    tasks.deleteTask.mockReturnValue(of(void 0));
+    component.messages = [{ id: 1, role: 'assistant', text: 'Propuesta' }];
+
+    component.executeProposedAction(1, { type: 'TASK_DELETE', targetId: 42, title: 'Tarea de prueba', description: '', dueDate: '', priority: 'MEDIA' });
+
+    expect(tasks.deleteTask).toHaveBeenCalledWith(42);
+    expect(component.messages[0].executionMessage).toContain('Eliminar tarea');
   });
 });

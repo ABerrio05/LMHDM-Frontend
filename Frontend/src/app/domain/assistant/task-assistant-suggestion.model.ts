@@ -6,7 +6,8 @@ export interface TaskAssistantSuggestion {
 }
 
 export interface AssistantActionProposal {
-  type: 'TASK' | 'NOTE';
+  type: 'TASK_CREATE' | 'NOTE_CREATE' | 'TASK_UPDATE' | 'NOTE_UPDATE' | 'TASK_DELETE' | 'NOTE_DELETE';
+  targetId: number | null;
   title: string;
   description: string;
   dueDate: string;

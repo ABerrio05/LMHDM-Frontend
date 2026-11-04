@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, Observable } from 'rxjs';
 
 import { AssistantActionProposal, TaskAssistantSuggestion } from '../../../../domain/assistant/task-assistant-suggestion.model';
 import { TaskAssistantService } from '../../../../infrastructure/assistant/task-assistant.service';
@@ -95,24 +95,49 @@ export class TaskAssistantComponent {
   }
 
   executeProposedAction(messageId: number, action: AssistantActionProposal): void {
-    const noun = action.type === 'TASK' ? 'tarea' : 'nota';
-    if (!window.confirm(`¿Crear ${noun} “${action.title}”? La IA no realizará el cambio hasta que confirmes.`)) return;
+    const label = this.actionLabel(action.type);
+    const subject = action.title || `${action.type.includes('TASK') ? 'tarea' : 'nota'} #${action.targetId}`;
+    if (!window.confirm(`¿${label} “${subject}”? La IA no realizará el cambio hasta que confirmes.`)) return;
     this.updateMessage(messageId, { executing: true, executionMessage: '' });
-    if (action.type === 'TASK') {
-      this.tasks.createTask({
+    switch (action.type) {
+      case 'TASK_CREATE':
+        this.performProposedRequest(messageId, label, this.tasks.createTask({
           title: action.title,
           description: action.description || undefined,
           dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
           priority: action.priority || 'MEDIA',
-        }).pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
-          next: () => this.actionCreated(messageId, noun),
-          error: (error: unknown) => this.actionFailed(messageId, error),
-        });
-      return;
+        }));
+        return;
+      case 'NOTE_CREATE':
+        this.performProposedRequest(messageId, label, this.notes.create({ title: action.title, content: action.description || action.title }));
+        return;
+      case 'TASK_UPDATE':
+        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la tarea a editar.'));
+        this.performProposedRequest(messageId, label, this.tasks.updateTask(action.targetId, {
+          title: action.title,
+          description: action.description || undefined,
+          dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
+          priority: action.priority || 'MEDIA',
+        }));
+        return;
+      case 'NOTE_UPDATE':
+        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la nota a editar.'));
+        this.performProposedRequest(messageId, label, this.notes.update(action.targetId, { title: action.title, content: action.description || action.title }));
+        return;
+      case 'TASK_DELETE':
+        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la tarea a eliminar.'));
+        this.performProposedRequest(messageId, label, this.tasks.deleteTask(action.targetId));
+        return;
+      case 'NOTE_DELETE':
+        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la nota a eliminar.'));
+        this.performProposedRequest(messageId, label, this.notes.delete(action.targetId));
     }
-    this.notes.create({ title: action.title, content: action.description || action.title })
+  }
+
+  private performProposedRequest(messageId: number, label: string, request: Observable<unknown>): void {
+    request
       .pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
-        next: () => this.actionCreated(messageId, noun),
+        next: () => this.actionCreated(messageId, label),
         error: (error: unknown) => this.actionFailed(messageId, error),
       });
   }
@@ -138,12 +163,19 @@ export class TaskAssistantComponent {
     this.changeDetector.markForCheck();
   }
 
-  private actionCreated(messageId: number, noun: string): void {
-    this.updateMessage(messageId, { executing: false, executionMessage: `✓ ${noun[0].toUpperCase() + noun.slice(1)} creada correctamente.` });
+  private actionCreated(messageId: number, label: string): void {
+    this.updateMessage(messageId, { executing: false, executionMessage: `✓ Acción realizada: ${label.toLowerCase()}.` });
   }
 
   private actionFailed(messageId: number, error: unknown): void {
     this.updateMessage(messageId, { executing: false, executionMessage: this.messageFrom(error) });
+  }
+
+  actionLabel(type: AssistantActionProposal['type']): string {
+    return {
+      TASK_CREATE: 'Crear tarea', NOTE_CREATE: 'Guardar nota', TASK_UPDATE: 'Actualizar tarea',
+      NOTE_UPDATE: 'Actualizar nota', TASK_DELETE: 'Eliminar tarea', NOTE_DELETE: 'Eliminar nota',
+    }[type];
   }
 
   private newMessageId(): number {
