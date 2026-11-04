@@ -78,15 +78,20 @@ describe('TaskAssistantComponent', () => {
     expect(assistant.suggest).not.toHaveBeenCalled();
   });
 
-  it('creates an AI-proposed task only after confirmation', () => {
+  it('applies all AI-proposed actions only after one confirmation', () => {
     vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
     tasks.createTask.mockReturnValue(of({ id: 3 }));
+    notes.create.mockReturnValue(of({ id: 4 }));
     component.messages = [{ id: 1, role: 'assistant', text: 'Propuesta' }];
 
-    component.executeProposedAction(1, { type: 'TASK_CREATE', targetId: null, title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06', priority: 'ALTA' });
+    component.executeProposedActions(1, [
+      { type: 'TASK_CREATE', targetId: null, title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06', priority: 'ALTA' },
+      { type: 'NOTE_CREATE', targetId: null, title: 'Guion', description: 'Presentación', dueDate: '', priority: 'MEDIA' },
+    ]);
 
     expect(tasks.createTask).toHaveBeenCalledWith({ title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06T09:00', priority: 'ALTA' });
-    expect(component.messages[0].executionMessage).toContain('Crear tarea');
+    expect(notes.create).toHaveBeenCalledWith({ title: 'Guion', content: 'Presentación' });
+    expect(component.messages[0].executionMessage).toContain('Cambios aplicados');
   });
 
   it('deletes only the task ID proposed by the assistant after confirmation', () => {
@@ -94,7 +99,7 @@ describe('TaskAssistantComponent', () => {
     tasks.deleteTask.mockReturnValue(of(void 0));
     component.messages = [{ id: 1, role: 'assistant', text: 'Propuesta' }];
 
-    component.executeProposedAction(1, { type: 'TASK_DELETE', targetId: 42, title: 'Tarea de prueba', description: '', dueDate: '', priority: 'MEDIA' });
+    component.executeProposedActions(1, [{ type: 'TASK_DELETE', targetId: 42, title: 'Tarea de prueba', description: '', dueDate: '', priority: 'MEDIA' }]);
 
     expect(tasks.deleteTask).toHaveBeenCalledWith(42);
     expect(component.messages[0].executionMessage).toContain('Eliminar tarea');

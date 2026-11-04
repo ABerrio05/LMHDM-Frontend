@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize, Observable } from 'rxjs';
+import { concat, finalize, Observable, throwError, toArray } from 'rxjs';
 
 import { AssistantActionProposal, TaskAssistantSuggestion } from '../../../../domain/assistant/task-assistant-suggestion.model';
 import { TaskAssistantService } from '../../../../infrastructure/assistant/task-assistant.service';
@@ -94,52 +94,54 @@ export class TaskAssistantComponent {
     this.changeDetector.markForCheck();
   }
 
-  executeProposedAction(messageId: number, action: AssistantActionProposal): void {
-    const label = this.actionLabel(action.type);
-    const subject = action.title || `${action.type.includes('TASK') ? 'tarea' : 'nota'} #${action.targetId}`;
-    if (!window.confirm(`¿${label} “${subject}”? La IA no realizará el cambio hasta que confirmes.`)) return;
-    this.updateMessage(messageId, { executing: true, executionMessage: '' });
-    switch (action.type) {
-      case 'TASK_CREATE':
-        this.performProposedRequest(messageId, label, this.tasks.createTask({
-          title: action.title,
-          description: action.description || undefined,
-          dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
-          priority: action.priority || 'MEDIA',
-        }));
-        return;
-      case 'NOTE_CREATE':
-        this.performProposedRequest(messageId, label, this.notes.create({ title: action.title, content: action.description || action.title }));
-        return;
-      case 'TASK_UPDATE':
-        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la tarea a editar.'));
-        this.performProposedRequest(messageId, label, this.tasks.updateTask(action.targetId, {
-          title: action.title,
-          description: action.description || undefined,
-          dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
-          priority: action.priority || 'MEDIA',
-        }));
-        return;
-      case 'NOTE_UPDATE':
-        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la nota a editar.'));
-        this.performProposedRequest(messageId, label, this.notes.update(action.targetId, { title: action.title, content: action.description || action.title }));
-        return;
-      case 'TASK_DELETE':
-        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la tarea a eliminar.'));
-        this.performProposedRequest(messageId, label, this.tasks.deleteTask(action.targetId));
-        return;
-      case 'NOTE_DELETE':
-        if (action.targetId === null) return this.actionFailed(messageId, new Error('La IA no identificó la nota a eliminar.'));
-        this.performProposedRequest(messageId, label, this.notes.delete(action.targetId));
+  executeProposedActions(messageId: number, actions: AssistantActionProposal[]): void {
+    const invalidAction = actions.find(action => !this.isExecutable(action));
+    if (invalidAction) {
+      this.actionFailed(messageId, new Error('La propuesta no contiene los datos necesarios. No se aplicó ningún cambio.'));
+      return;
     }
+    const summary = actions.map(action => this.actionDescription(action)).join('\n• ');
+    if (!window.confirm(`Se aplicarán estas acciones:\n• ${summary}\n\n¿Deseas confirmar todos los cambios?`)) return;
+    this.updateMessage(messageId, { executing: true, executionMessage: '' });
+    const requests = actions.map(action => this.requestFor(action));
+    concat(...requests).pipe(toArray(), finalize(() => this.changeDetector.markForCheck())).subscribe({
+      next: () => this.actionsCompleted(messageId, actions),
+      error: (error: unknown) => this.actionFailed(messageId, error),
+    });
   }
 
-  private performProposedRequest(messageId: number, label: string, request: Observable<unknown>): void {
-    request
-      .pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
-        next: () => this.actionCreated(messageId, label),
-        error: (error: unknown) => this.actionFailed(messageId, error),
-      });
+  private requestFor(action: AssistantActionProposal): Observable<unknown> {
+    switch (action.type) {
+      case 'TASK_CREATE':
+        return this.tasks.createTask({
+          title: action.title,
+          description: action.description || undefined,
+          dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
+          priority: action.priority || 'MEDIA',
+        });
+      case 'NOTE_CREATE':
+        return this.notes.create({ title: action.title, content: action.description || action.title });
+      case 'TASK_UPDATE':
+        return this.tasks.updateTask(action.targetId!, {
+          title: action.title,
+          description: action.description || undefined,
+          dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
+          priority: action.priority || 'MEDIA',
+        });
+      case 'NOTE_UPDATE':
+        return this.notes.update(action.targetId!, { title: action.title, content: action.description || action.title });
+      case 'TASK_DELETE':
+        return this.tasks.deleteTask(action.targetId!);
+      case 'NOTE_DELETE':
+        return this.notes.delete(action.targetId!);
+    }
+    return throwError(() => new Error('La acción propuesta no es válida.'));
+  }
+
+  private isExecutable(action: AssistantActionProposal): boolean {
+    if (action.type.endsWith('DELETE')) return action.targetId !== null && action.targetId > 0;
+    if (action.type.endsWith('UPDATE')) return action.targetId !== null && action.targetId > 0 && !!action.title.trim();
+    return !!action.title.trim();
   }
 
   private assistantMessage(id: number, suggestion: TaskAssistantSuggestion): ChatMessage {
@@ -163,8 +165,20 @@ export class TaskAssistantComponent {
     this.changeDetector.markForCheck();
   }
 
-  private actionCreated(messageId: number, label: string): void {
-    this.updateMessage(messageId, { executing: false, executionMessage: `✓ Acción realizada: ${label}.` });
+  actionDescription(action: AssistantActionProposal): string {
+    const subject = action.title || `${action.type.includes('TASK') ? 'tarea' : 'nota'} #${action.targetId}`;
+    return `${this.actionLabel(action.type)}: ${subject}`;
+  }
+
+  hasDeleteAction(actions: AssistantActionProposal[] | undefined): boolean {
+    return !!actions?.some(action => action.type.endsWith('DELETE'));
+  }
+
+  private actionsCompleted(messageId: number, actions: AssistantActionProposal[]): void {
+    this.updateMessage(messageId, {
+      executing: false,
+      executionMessage: `✓ Cambios aplicados: ${actions.map(action => this.actionLabel(action.type)).join(', ')}.`,
+    });
   }
 
   private actionFailed(messageId: number, error: unknown): void {
