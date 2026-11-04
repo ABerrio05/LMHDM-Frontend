@@ -96,18 +96,23 @@ export class TaskAssistantComponent {
     const noun = action.type === 'TASK' ? 'tarea' : 'nota';
     if (!window.confirm(`¿Crear ${noun} “${action.title}”? La IA no realizará el cambio hasta que confirmes.`)) return;
     this.updateMessage(messageId, { executing: true, executionMessage: '' });
-    const request = action.type === 'TASK'
-      ? this.tasks.createTask({
+    if (action.type === 'TASK') {
+      this.tasks.createTask({
           title: action.title,
           description: action.description || undefined,
           dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
           priority: action.priority || 'MEDIA',
-        })
-      : this.notes.create({ title: action.title, content: action.description || action.title });
-    request.pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
-      next: () => this.updateMessage(messageId, { executing: false, executionMessage: `✓ ${noun[0].toUpperCase() + noun.slice(1)} creada correctamente.` }),
-      error: error => this.updateMessage(messageId, { executing: false, executionMessage: this.messageFrom(error) }),
-    });
+        }).pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
+          next: () => this.actionCreated(messageId, noun),
+          error: (error: unknown) => this.actionFailed(messageId, error),
+        });
+      return;
+    }
+    this.notes.create({ title: action.title, content: action.description || action.title })
+      .pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
+        next: () => this.actionCreated(messageId, noun),
+        error: (error: unknown) => this.actionFailed(messageId, error),
+      });
   }
 
   private assistantMessage(id: number, suggestion: TaskAssistantSuggestion): ChatMessage {
@@ -129,6 +134,14 @@ export class TaskAssistantComponent {
   private updateMessage(id: number, patch: Partial<ChatMessage>): void {
     this.messages = this.messages.map(message => message.id === id ? { ...message, ...patch } : message);
     this.changeDetector.markForCheck();
+  }
+
+  private actionCreated(messageId: number, noun: string): void {
+    this.updateMessage(messageId, { executing: false, executionMessage: `✓ ${noun[0].toUpperCase() + noun.slice(1)} creada correctamente.` });
+  }
+
+  private actionFailed(messageId: number, error: unknown): void {
+    this.updateMessage(messageId, { executing: false, executionMessage: this.messageFrom(error) });
   }
 
   private newMessageId(): number {
