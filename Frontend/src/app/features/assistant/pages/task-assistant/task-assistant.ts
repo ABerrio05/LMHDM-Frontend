@@ -164,7 +164,7 @@ export class TaskAssistantComponent {
   }
 
   private actionCreated(messageId: number, label: string): void {
-    this.updateMessage(messageId, { executing: false, executionMessage: `✓ Acción realizada: ${label.toLowerCase()}.` });
+    this.updateMessage(messageId, { executing: false, executionMessage: `✓ Acción realizada: ${label}.` });
   }
 
   private actionFailed(messageId: number, error: unknown): void {
