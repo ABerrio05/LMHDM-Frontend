@@ -68,6 +68,8 @@ export class TaskAssistantComponent {
       { id: pendingId, role: 'assistant', text: 'Analizando tus tareas y preparando una recomendación…', pending: true },
     ];
     this.form.reset({ question: '' });
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
     this.changeDetector.markForCheck();
 
     this.assistant.suggest(question)
@@ -149,6 +151,9 @@ export class TaskAssistantComponent {
   }
 
   private messageFrom(error: unknown): string {
+    if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+      return 'Tu sesión expiró o ya no es válida. Cierra sesión, inicia nuevamente e inténtalo otra vez.';
+    }
     const response = error instanceof HttpErrorResponse ? error.error : undefined;
     return response?.message || 'No fue posible generar la sugerencia. Inténtalo nuevamente.';
   }
