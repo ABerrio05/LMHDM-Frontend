@@ -5,8 +5,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { TaskAssistantSuggestion } from '../../../../domain/assistant/task-assistant-suggestion.model';
+import { AssistantActionProposal, TaskAssistantSuggestion } from '../../../../domain/assistant/task-assistant-suggestion.model';
 import { TaskAssistantService } from '../../../../infrastructure/assistant/task-assistant.service';
+import { PersonalNoteService } from '../../../../infrastructure/notes/personal-note.service';
+import { TaskService } from '../../../../infrastructure/tasks/task.service';
 
 type ChatRole = 'assistant' | 'error' | 'user';
 
@@ -17,6 +19,9 @@ interface ChatMessage {
   recommendedActions?: string[];
   providerConfigured?: boolean;
   pending?: boolean;
+  proposedActions?: AssistantActionProposal[];
+  executionMessage?: string;
+  executing?: boolean;
 }
 
 @Component({
@@ -30,6 +35,8 @@ export class TaskAssistantComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly assistant = inject(TaskAssistantService);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly tasks = inject(TaskService);
+  private readonly notes = inject(PersonalNoteService);
   private nextMessageId = 1;
 
   readonly form = this.formBuilder.nonNullable.group({
@@ -85,18 +92,42 @@ export class TaskAssistantComponent {
     this.changeDetector.markForCheck();
   }
 
+  executeProposedAction(messageId: number, action: AssistantActionProposal): void {
+    const noun = action.type === 'TASK' ? 'tarea' : 'nota';
+    if (!window.confirm(`¿Crear ${noun} “${action.title}”? La IA no realizará el cambio hasta que confirmes.`)) return;
+    this.updateMessage(messageId, { executing: true, executionMessage: '' });
+    const request = action.type === 'TASK'
+      ? this.tasks.createTask({
+          title: action.title,
+          description: action.description || undefined,
+          dueDate: action.dueDate ? `${action.dueDate}T09:00` : undefined,
+          priority: action.priority || 'MEDIA',
+        })
+      : this.notes.create({ title: action.title, content: action.description || action.title });
+    request.pipe(finalize(() => this.changeDetector.markForCheck())).subscribe({
+      next: () => this.updateMessage(messageId, { executing: false, executionMessage: `✓ ${noun[0].toUpperCase() + noun.slice(1)} creada correctamente.` }),
+      error: error => this.updateMessage(messageId, { executing: false, executionMessage: this.messageFrom(error) }),
+    });
+  }
+
   private assistantMessage(id: number, suggestion: TaskAssistantSuggestion): ChatMessage {
     return {
       id,
       role: 'assistant',
       text: suggestion.answer,
       recommendedActions: Array.isArray(suggestion.recommendedActions) ? suggestion.recommendedActions : [],
+      proposedActions: Array.isArray(suggestion.proposedActions) ? suggestion.proposedActions : [],
       providerConfigured: suggestion.providerConfigured,
     };
   }
 
   private replacePendingMessage(id: number, message: ChatMessage): void {
     this.messages = this.messages.map(current => current.id === id ? message : current);
+    this.changeDetector.markForCheck();
+  }
+
+  private updateMessage(id: number, patch: Partial<ChatMessage>): void {
+    this.messages = this.messages.map(message => message.id === id ? { ...message, ...patch } : message);
     this.changeDetector.markForCheck();
   }
 

@@ -4,17 +4,25 @@ import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TaskAssistantService } from '../../../../infrastructure/assistant/task-assistant.service';
+import { PersonalNoteService } from '../../../../infrastructure/notes/personal-note.service';
+import { TaskService } from '../../../../infrastructure/tasks/task.service';
 import { TaskAssistantComponent } from './task-assistant';
 
 describe('TaskAssistantComponent', () => {
   const assistant = { suggest: vi.fn() };
+  const tasks = { createTask: vi.fn() };
+  const notes = { create: vi.fn() };
   let component: TaskAssistantComponent;
 
   beforeEach(() => {
     assistant.suggest.mockReset();
+    tasks.createTask.mockReset();
+    notes.create.mockReset();
     TestBed.configureTestingModule({
       providers: [
         { provide: TaskAssistantService, useValue: assistant },
+        { provide: TaskService, useValue: tasks },
+        { provide: PersonalNoteService, useValue: notes },
         { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
       ],
     });
@@ -64,5 +72,16 @@ describe('TaskAssistantComponent', () => {
 
     expect(component.messages).toEqual([]);
     expect(assistant.suggest).not.toHaveBeenCalled();
+  });
+
+  it('creates an AI-proposed task only after confirmation', () => {
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
+    tasks.createTask.mockReturnValue(of({ id: 3 }));
+    component.messages = [{ id: 1, role: 'assistant', text: 'Propuesta' }];
+
+    component.executeProposedAction(1, { type: 'TASK', title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06', priority: 'ALTA' });
+
+    expect(tasks.createTask).toHaveBeenCalledWith({ title: 'Preparar demo', description: 'Antes del viernes', dueDate: '2026-11-06T09:00', priority: 'ALTA' });
+    expect(component.messages[0].executionMessage).toContain('Tarea creada');
   });
 });

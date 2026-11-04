@@ -76,6 +76,19 @@
                     @for (action of message.recommendedActions; track action) { <li>{{ action }}</li> }
                   </ul>
                 }
+                @if (message.proposedActions?.length) {
+                  <section class="proposed-actions">
+                    <span class="panel-kicker">ACCIONES PARA CONFIRMAR</span>
+                    <p>La IA propone estas acciones. Nada se crea hasta que pulses el botón y confirmes.</p>
+                    @for (action of message.proposedActions; track action.type + action.title) {
+                      <article class="action-proposal">
+                        <div><strong>{{ action.type === 'TASK' ? 'Nueva tarea' : 'Nueva nota' }}</strong><span>{{ action.title }}</span>@if (action.dueDate) { <small>Fecha sugerida: {{ action.dueDate }}</small> }</div>
+                        <button type="button" [disabled]="message.executing || !!message.executionMessage" (click)="executeProposedAction(message.id, action)">{{ message.executing ? 'Creando…' : action.type === 'TASK' ? 'Crear tarea' : 'Guardar nota' }}</button>
+                      </article>
+                    }
+                    @if (message.executionMessage) { <p class="execution-message">{{ message.executionMessage }}</p> }
+                  </section>
+                }
               }
             </article>
           }
