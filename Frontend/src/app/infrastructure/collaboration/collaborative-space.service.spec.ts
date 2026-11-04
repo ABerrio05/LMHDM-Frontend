@@ -42,10 +42,10 @@ describe('CollaborativeSpaceService', () => {
     expect(membersRequest.request.method).toBe('GET');
     membersRequest.flush([{ id: 1, spaceId: 8, userId: 1, role: 'ADMINISTRADOR', joinedAt: '2026-10-29T12:00:00' }]);
 
-    service.invite(8, { email: 'mateo@nexo.test', role: 'MIEMBRO' }).subscribe((member) => expect(member.role).toBe('MIEMBRO'));
+    service.invite(8, { email: 'mateo@nexo.test', role: 'MIEMBRO' }).subscribe((result) => expect(result.member?.role).toBe('MIEMBRO'));
     const inviteRequest = http.expectOne(`${baseUrl}/8/members`);
     expect(inviteRequest.request.method).toBe('POST');
-    inviteRequest.flush({ id: 2, spaceId: 8, userId: 2, role: 'MIEMBRO', joinedAt: '2026-10-29T12:00:00' });
+    inviteRequest.flush({ member: { id: 2, spaceId: 8, userId: 2, role: 'MIEMBRO', joinedAt: '2026-10-29T12:00:00' }, registrationRequired: false });
 
     service.listTasks(8).subscribe((tasks) => expect(tasks).toHaveLength(1));
     const tasksRequest = http.expectOne(`${baseUrl}/8/tasks`);

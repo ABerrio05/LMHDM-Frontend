@@ -3,7 +3,7 @@
     <div>
       <span class="eyebrow">NEXO · COLABORACIÓN</span>
       <h1>Espacios colaborativos</h1>
-      <p>Crea un espacio, invita usuarios registrados y organiza trabajo compartido.</p>
+      <p>Crea un espacio, invita usuarios o personas nuevas y organiza trabajo compartido.</p>
     </div>
     <nav aria-label="Navegación principal">
       <a routerLink="/tasks">Mis tareas y recordatorios</a>
@@ -68,9 +68,9 @@
                 </ul>
               }
               <form [formGroup]="inviteForm" (ngSubmit)="invite(space.id)" class="invite-form">
-                <label>Correo del usuario registrado<input type="email" formControlName="email" placeholder="compañero@correo.com" /></label>
+                <label>Correo del integrante<input type="email" formControlName="email" placeholder="compañero@correo.com" /></label>
                 <label>Rol<select formControlName="role"><option value="MIEMBRO">Miembro</option><option value="MODERADOR">Moderador</option><option value="INVITADO">Invitado</option></select></label>
-                <button type="submit" [disabled]="inviting">{{ inviting ? 'Agregando...' : 'Agregar integrante' }}</button>
+                <button type="submit" [disabled]="inviting">{{ inviting ? 'Enviando...' : 'Invitar integrante' }}</button>
               </form>
 
               </section>

@@ -25,3 +25,8 @@ export interface InviteMemberRequest {
   email: string;
   role: SpaceRole;
 }
+
+export interface InvitationResult {
+  member: SpaceMember | null;
+  registrationRequired: boolean;
+}

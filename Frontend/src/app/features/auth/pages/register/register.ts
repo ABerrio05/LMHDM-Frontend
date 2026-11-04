@@ -4,7 +4,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 
@@ -21,6 +21,7 @@ export class RegisterComponent {
 
   // Debe ser público porque register.html lo utiliza.
   readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly changeDetector = inject(ChangeDetectorRef);
 
   readonly registerForm = this.formBuilder.nonNullable.group({
@@ -31,6 +32,7 @@ export class RegisterComponent {
 
   isLoading = false;
   errorMessage = '';
+  readonly invitationToken = this.route?.snapshot.queryParamMap.get('invitation')?.trim() || '';
 
   onSubmit(): void {
     if (this.registerForm.invalid) {
@@ -41,7 +43,10 @@ export class RegisterComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const request = this.registerForm.getRawValue();
+    const request = {
+      ...this.registerForm.getRawValue(),
+      ...(this.invitationToken ? { invitationToken: this.invitationToken } : {}),
+    };
 
     this.authService.register(request).subscribe({
       next: () => {

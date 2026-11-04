@@ -7,6 +7,7 @@ import {
   CollaborativeSpace,
   CreateSpaceRequest,
   InviteMemberRequest,
+  InvitationResult,
   SpaceMember,
 } from '../../domain/collaboration/collaborative-space.model';
 import { Task } from '../../domain/task/task.model';
@@ -36,8 +37,8 @@ export class CollaborativeSpaceService {
     return this.http.get<SpaceMember[]>(`${this.apiUrl}/${spaceId}/members`);
   }
 
-  invite(spaceId: number, request: InviteMemberRequest): Observable<SpaceMember> {
-    return this.http.post<SpaceMember>(`${this.apiUrl}/${spaceId}/members`, request);
+  invite(spaceId: number, request: InviteMemberRequest): Observable<InvitationResult> {
+    return this.http.post<InvitationResult>(`${this.apiUrl}/${spaceId}/members`, request);
   }
 
   listTasks(spaceId: number): Observable<Task[]> {

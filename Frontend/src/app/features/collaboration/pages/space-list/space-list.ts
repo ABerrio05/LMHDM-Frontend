@@ -222,10 +222,12 @@ export class SpaceListComponent implements OnInit {
         this.refreshView();
       }))
       .subscribe({
-        next: member => {
-          this.members[spaceId] = [...(this.members[spaceId] ?? []), member];
+        next: result => {
+          if (result.member) this.members[spaceId] = [...(this.members[spaceId] ?? []), result.member];
           this.inviteForm.reset({ email: '', role: 'MIEMBRO' });
-          this.feedback = 'Integrante agregado al espacio.';
+          this.feedback = result.registrationRequired
+            ? 'Invitación enviada. La persona recibirá un enlace para registrarse y unirse al espacio.'
+            : 'Integrante agregado al espacio y notificado por correo.';
           this.refreshView();
         },
         error: error => {
