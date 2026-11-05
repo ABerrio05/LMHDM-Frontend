@@ -248,7 +248,7 @@ export class SpaceListComponent implements OnInit {
     this.taskService.createTask({
       title: value.title.trim(),
       description: value.description.trim() || undefined,
-      dueDate: value.dueDate || undefined,
+      dueDate: value.dueDate ? `${value.dueDate}T23:59:00` : undefined,
       priority: value.priority,
       spaceId,
     }).pipe(finalize(() => {
