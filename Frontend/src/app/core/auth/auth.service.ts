@@ -47,6 +47,20 @@ export class AuthService {
     );
   }
 
+  currentUserId(): number | null {
+    const token = this.getAccessToken();
+    if (!token) return null;
+    try {
+      const payload = token.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/');
+      if (!payload) return null;
+      const subject = JSON.parse(atob(payload)).sub;
+      const userId = Number(subject);
+      return Number.isFinite(userId) ? userId : null;
+    } catch {
+      return null;
+    }
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.roleKey);

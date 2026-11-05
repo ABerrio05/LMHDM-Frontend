@@ -17,6 +17,7 @@ export interface SpaceMember {
   id: number;
   spaceId: number;
   userId: number;
+  userName: string;
   role: SpaceRole;
   joinedAt: string;
 }

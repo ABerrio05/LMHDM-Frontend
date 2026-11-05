@@ -9,6 +9,7 @@ import {
   InviteMemberRequest,
   InvitationResult,
   SpaceMember,
+  SpaceRole,
 } from '../../domain/collaboration/collaborative-space.model';
 import { Task } from '../../domain/task/task.model';
 
@@ -43,5 +44,13 @@ export class CollaborativeSpaceService {
 
   listTasks(spaceId: number): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.apiUrl}/${spaceId}/tasks`);
+  }
+
+  updateMemberRole(spaceId: number, memberUserId: number, role: SpaceRole): Observable<SpaceMember> {
+    return this.http.put<SpaceMember>(`${this.apiUrl}/${spaceId}/members/${memberUserId}/role`, { role });
+  }
+
+  assignTask(spaceId: number, taskId: number, assigneeId: number): Observable<Task> {
+    return this.http.patch<Task>(`${this.apiUrl}/${spaceId}/tasks/${taskId}/assignee`, { assigneeId });
   }
 }

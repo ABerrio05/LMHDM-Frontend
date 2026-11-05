@@ -8,9 +8,12 @@ import { finalize } from 'rxjs';
 import {
   CollaborativeSpace,
   SpaceMember,
+  SpaceRole,
 } from '../../../../domain/collaboration/collaborative-space.model';
 import { Task } from '../../../../domain/task/task.model';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { CollaborativeSpaceService } from '../../../../infrastructure/collaboration/collaborative-space.service';
+import { ReminderService } from '../../../../infrastructure/reminders/reminder.service';
 import { TaskService } from '../../../../infrastructure/tasks/task.service';
 
 @Component({
@@ -25,6 +28,8 @@ export class SpaceListComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly taskService = inject(TaskService);
+  private readonly reminderService = inject(ReminderService);
+  private readonly auth = inject(AuthService);
 
   spaces: CollaborativeSpace[] = [];
   members: Record<number, SpaceMember[]> = {};
@@ -37,6 +42,12 @@ export class SpaceListComponent implements OnInit {
   savingEdit = false;
   creatingTaskForSpaceId: number | null = null;
   deletingSpaceId: number | null = null;
+  editingTaskId: number | null = null;
+  reminderTaskId: number | null = null;
+  savingTask = false;
+  savingReminder = false;
+  updatingRoleUserId: number | null = null;
+  assigningTaskId: number | null = null;
   error = '';
   feedback = '';
 
@@ -61,6 +72,34 @@ export class SpaceListComponent implements OnInit {
     dueDate: [''],
     priority: ['MEDIA' as const, Validators.required],
   });
+
+  readonly taskEditForm = this.formBuilder.nonNullable.group({
+    title: ['', [Validators.required, Validators.maxLength(255)]],
+    description: ['', Validators.maxLength(2_000)],
+    dueDate: [''],
+    priority: ['MEDIA' as const, Validators.required],
+  });
+
+  readonly reminderForm = this.formBuilder.nonNullable.group({
+    scheduledAt: ['', Validators.required],
+    message: ['', [Validators.required, Validators.maxLength(500)]],
+  });
+
+  get currentUserId(): number | null { return this.auth.currentUserId(); }
+
+  roleFor(spaceId: number): SpaceRole | null {
+    const userId = this.currentUserId;
+    return userId === null ? null : (this.members[spaceId] ?? []).find(member => member.userId === userId)?.role ?? null;
+  }
+
+  isManager(spaceId: number): boolean {
+    const role = this.roleFor(spaceId);
+    return role === 'ADMINISTRADOR' || role === 'MODERADOR';
+  }
+
+  canManageTasks(spaceId: number): boolean { return this.roleFor(spaceId) !== 'INVITADO'; }
+  canInvite(spaceId: number): boolean { return this.roleFor(spaceId) !== 'INVITADO'; }
+  roleLabel(role: SpaceRole): string { return { ADMINISTRADOR: 'Administrador', MODERADOR: 'Moderador', MIEMBRO: 'Miembro', INVITADO: 'Invitado' }[role]; }
 
   ngOnInit(): void {
     this.loadSpaces();
@@ -223,7 +262,9 @@ export class SpaceListComponent implements OnInit {
       }))
       .subscribe({
         next: result => {
-          if (result.member) this.members[spaceId] = [...(this.members[spaceId] ?? []), result.member];
+          this.spacesService.listMembers(spaceId).subscribe({
+            next: members => { this.members[spaceId] = Array.isArray(members) ? members : []; this.refreshView(); },
+          });
           this.inviteForm.reset({ email: '', role: 'MIEMBRO' });
           this.feedback = result.registrationRequired
             ? 'Invitación enviada. La persona recibirá un enlace para registrarse y unirse al espacio.'
@@ -266,6 +307,89 @@ export class SpaceListComponent implements OnInit {
         this.refreshView();
       },
     });
+  }
+
+  updateMemberRole(spaceId: number, member: SpaceMember, role: string): void {
+    if (!this.isManager(spaceId) || this.updatingRoleUserId !== null) return;
+    this.updatingRoleUserId = member.userId;
+    this.spacesService.updateMemberRole(spaceId, member.userId, role as SpaceRole)
+      .pipe(finalize(() => { this.updatingRoleUserId = null; this.refreshView(); }))
+      .subscribe({
+        next: updated => {
+          this.members[spaceId] = (this.members[spaceId] ?? []).map(item => item.userId === updated.userId
+            ? { ...item, ...updated, userName: item.userName } : item);
+          this.feedback = `Rol de ${member.userName} actualizado.`;
+        },
+        error: error => this.error = this.messageFrom(error, 'No se pudo modificar el rol.'),
+      });
+  }
+
+  startTaskEdit(task: Task): void {
+    this.editingTaskId = task.id;
+    this.taskEditForm.reset({
+      title: task.title,
+      description: task.description ?? '',
+      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
+      priority: task.priority,
+    });
+  }
+
+  saveTaskEdit(spaceId: number, taskId: number): void {
+    if (!this.canManageTasks(spaceId) || this.taskEditForm.invalid || this.savingTask) return;
+    this.savingTask = true;
+    const value = this.taskEditForm.getRawValue();
+    this.taskService.updateTask(taskId, {
+      title: value.title.trim(), description: value.description.trim() || undefined,
+      dueDate: value.dueDate ? `${value.dueDate}T23:59:00` : undefined, priority: value.priority,
+    }).pipe(finalize(() => { this.savingTask = false; this.refreshView(); })).subscribe({
+      next: task => { this.replaceTask(spaceId, task); this.editingTaskId = null; this.feedback = 'Tarea actualizada.'; },
+      error: error => this.error = this.messageFrom(error, 'No se pudo actualizar la tarea.'),
+    });
+  }
+
+  deleteTask(spaceId: number, task: Task): void {
+    if (!this.canManageTasks(spaceId) || !window.confirm(`¿Eliminar la tarea “${task.title}”?`)) return;
+    this.taskService.deleteTask(task.id).subscribe({
+      next: () => { this.spaceTasks[spaceId] = (this.spaceTasks[spaceId] ?? []).filter(item => item.id !== task.id); this.feedback = 'Tarea eliminada.'; this.refreshView(); },
+      error: error => { this.error = this.messageFrom(error, 'No se pudo eliminar la tarea.'); this.refreshView(); },
+    });
+  }
+
+  assignTask(spaceId: number, taskId: number, assigneeId: string): void {
+    const parsedId = Number(assigneeId);
+    if (!this.canManageTasks(spaceId) || !Number.isFinite(parsedId)) return;
+    this.assigningTaskId = taskId;
+    this.spacesService.assignTask(spaceId, taskId, parsedId)
+      .pipe(finalize(() => { this.assigningTaskId = null; this.refreshView(); }))
+      .subscribe({
+        next: task => { this.replaceTask(spaceId, task); this.feedback = 'Tarea asignada correctamente.'; },
+        error: error => this.error = this.messageFrom(error, 'No se pudo asignar la tarea.'),
+      });
+  }
+
+  showReminderForm(taskId: number): void {
+    this.reminderTaskId = this.reminderTaskId === taskId ? null : taskId;
+    this.reminderForm.reset({ scheduledAt: '', message: '' });
+  }
+
+  createReminder(spaceId: number, taskId: number): void {
+    if (!this.canManageTasks(spaceId) || this.reminderForm.invalid || this.savingReminder) return;
+    this.savingReminder = true;
+    const value = this.reminderForm.getRawValue();
+    this.reminderService.createReminder(taskId, { scheduledAt: value.scheduledAt, message: value.message.trim() })
+      .pipe(finalize(() => { this.savingReminder = false; this.refreshView(); }))
+      .subscribe({
+        next: () => { this.reminderTaskId = null; this.feedback = 'Recordatorio creado para la tarea.'; },
+        error: error => this.error = this.messageFrom(error, 'No se pudo crear el recordatorio.'),
+      });
+  }
+
+  memberName(spaceId: number, userId: number): string {
+    return (this.members[spaceId] ?? []).find(member => member.userId === userId)?.userName ?? 'Integrante del espacio';
+  }
+
+  private replaceTask(spaceId: number, updated: Task): void {
+    this.spaceTasks[spaceId] = (this.spaceTasks[spaceId] ?? []).map(task => task.id === updated.id ? updated : task);
   }
 
   private messageFrom(error: unknown, fallback: string): string {
