@@ -13,4 +13,16 @@ label { display:grid; gap:7px; min-width:0; font-size:13px; font-weight:700; } i
 .task-form,.edit-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:18px; padding:16px; border:1px solid #bfdbfe; border-radius:12px; background:#f8fafc; }.task-form h4,.task-form button,.edit-actions { grid-column:1 / -1; }.edit-actions { justify-content:flex-end; }
 @media (max-width:800px) { .page { width:min(100% - 28px,1180px); }.page-header,.workspace-head,.workspace-columns { display:grid; grid-template-columns:1fr; }.form-grid,.invite-form,.task-form,.edit-form,.task-edit-form,.reminder-form { grid-template-columns:1fr; }.space-tasks li { grid-template-columns:1fr; }.task-actions { justify-content:flex-start; }.assign-field { grid-template-columns:1fr; }.space-card.open { grid-column:auto; } }
 .assign-field { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
-.assign-field button { min-height:36px; }
+.assign-field button {
+  min-height:36px;
+  padding:0 14px;
+  border:0;
+  background:#2563eb;
+  color:#fff;
+  font:inherit;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 5px 12px rgba(37,99,235,.16);
+}
+.assign-field button:hover:not(:disabled) { background:#1d4ed8; transform:translateY(-1px); }
