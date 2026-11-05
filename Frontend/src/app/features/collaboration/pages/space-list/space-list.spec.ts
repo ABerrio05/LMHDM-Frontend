@@ -80,6 +80,9 @@ describe('SpaceListComponent', () => {
   it('invites a member and preserves a useful error message on failure', () => {
     const member = { id: 2, spaceId: 4, userId: 8, role: 'MIEMBRO' as const, joinedAt: '2026-10-29T12:00:00' };
     spacesService.invite.mockReturnValue(of({ member, registrationRequired: false }));
+    // Tras invitar, la pantalla consulta la lista real para reflejar nombre,
+    // rol y permisos que devuelve el servidor.
+    spacesService.listMembers.mockReturnValue(of([member]));
     component.inviteForm.setValue({ email: 'ana@nexo.test', role: 'MIEMBRO' });
     component.invite(4);
     expect(spacesService.invite).toHaveBeenCalledWith(4, { email: 'ana@nexo.test', role: 'MIEMBRO' });
