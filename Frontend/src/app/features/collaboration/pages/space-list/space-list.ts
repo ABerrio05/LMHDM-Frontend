@@ -70,14 +70,14 @@ export class SpaceListComponent implements OnInit {
     title: ['', [Validators.required, Validators.maxLength(255)]],
     description: ['', Validators.maxLength(2_000)],
     dueDate: [''],
-    priority: ['MEDIA' as const, Validators.required],
+    priority: ['MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA', Validators.required],
   });
 
   readonly taskEditForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
     description: ['', Validators.maxLength(2_000)],
     dueDate: [''],
-    priority: ['MEDIA' as const, Validators.required],
+    priority: ['MEDIA' as 'ALTA' | 'MEDIA' | 'BAJA', Validators.required],
   });
 
   readonly reminderForm = this.formBuilder.nonNullable.group({
