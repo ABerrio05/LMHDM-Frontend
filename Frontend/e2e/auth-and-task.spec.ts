@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('a user can register, create a task and save a personal note', async ({ page }) => {
+  test.setTimeout(180_000);
   const unique = `${Date.now()}-${Math.floor(Math.random() * 10_000)}`;
   const email = `e2e-${unique}@nexo.test`;
   const password = 'NexoE2E123';
@@ -26,9 +27,16 @@ test('a user can register, create a task and save a personal note', async ({ pag
   await page.getByRole('button', { name: /Crear primera tarea/ }).click();
   await page.locator('#create-title').fill('Tarea creada por E2E');
   await page.locator('#create-description').fill('Flujo completo de NEXO');
+  const taskResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/tasks') && response.request().method() === 'POST',
+    { timeout: 120_000 },
+  );
   await page.getByRole('button', { name: 'Crear tarea', exact: true }).click();
 
-  await expect(page.getByRole('heading', { name: 'Tarea creada por E2E' })).toBeVisible();
+  await expect((await taskResponse).status()).toBe(201);
+  await expect(page.getByRole('heading', { name: 'Tarea creada por E2E' })).toBeVisible({
+    timeout: 30_000,
+  });
 
   const noteResponse = page.waitForResponse(
     (response) => response.url().includes('/api/notes') && response.request().method() === 'POST',

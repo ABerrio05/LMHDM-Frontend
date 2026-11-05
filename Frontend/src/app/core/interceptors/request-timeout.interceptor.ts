@@ -1,7 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { retry, throwError, timer, TimeoutError, timeout } from 'rxjs';
 
-const REQUEST_TIMEOUT_MS = 20_000;
+// En Docker local el backend puede estar ocupado con migraciones, correos o
+// comprobaciones de salud. Un límite único de 20 s convertía respuestas lentas
+// pero válidas en errores visibles de carga.
+const READ_REQUEST_TIMEOUT_MS = 45_000;
+const MUTATION_REQUEST_TIMEOUT_MS = 45_000;
 
 const SAFE_RETRY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -10,11 +14,15 @@ const SAFE_RETRY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
  * API o un proveedor externo deja una conexión abierta sin responder.
  */
 export const requestTimeoutInterceptor: HttpInterceptorFn = (request, next) => {
-  const response$ = next(request).pipe(timeout(REQUEST_TIMEOUT_MS));
+  const isSafeRead = SAFE_RETRY_METHODS.has(request.method);
+  const timeoutMs = isSafeRead
+    ? READ_REQUEST_TIMEOUT_MS
+    : MUTATION_REQUEST_TIMEOUT_MS;
+  const response$ = next(request).pipe(timeout(timeoutMs));
 
   // Al arrancar, el backend puede tardar puntualmente en calentar sus consultas.
   // Reintentamos solo lecturas: nunca mutaciones que podrían duplicar una acción.
-  if (!SAFE_RETRY_METHODS.has(request.method)) {
+  if (!isSafeRead) {
     return response$;
   }
 
