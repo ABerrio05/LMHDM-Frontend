@@ -1,6 +1,6 @@
 /* Sistema visual compartido de NEXO. */
 :root {
-  --nexo-font: "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  --nexo-font: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
   --nexo-primary: #2563eb;
   --nexo-primary-hover: #1d4ed8;
   --nexo-control-radius: 10px;
@@ -30,9 +30,21 @@ textarea {
 }
 
 button {
+  min-height: var(--nexo-control-height) !important;
+  padding: 0 16px !important;
   border-radius: var(--nexo-control-radius) !important;
   font-weight: 800;
   letter-spacing: 0;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease,
+    box-shadow .18s ease, transform .18s ease;
+}
+
+/* Enlaces de navegación: mismo lenguaje visual que los controles del sistema. */
+nav a,
+.module-menu a {
+  border-radius: var(--nexo-control-radius) !important;
+  font-family: var(--nexo-font) !important;
+  font-weight: 800 !important;
   transition: background-color .18s ease, border-color .18s ease, color .18s ease,
     box-shadow .18s ease, transform .18s ease;
 }
