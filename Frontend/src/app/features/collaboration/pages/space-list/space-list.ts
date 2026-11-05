@@ -48,6 +48,7 @@ export class SpaceListComponent implements OnInit {
   savingReminder = false;
   updatingRoleUserId: number | null = null;
   assigningTaskId: number | null = null;
+  pendingAssignees: Record<number, number> = {};
   error = '';
   feedback = '';
 
@@ -355,14 +356,19 @@ export class SpaceListComponent implements OnInit {
     });
   }
 
-  assignTask(spaceId: number, taskId: number, assigneeId: string): void {
+  selectAssignee(taskId: number, assigneeId: string): void {
     const parsedId = Number(assigneeId);
+    if (Number.isFinite(parsedId)) this.pendingAssignees[taskId] = parsedId;
+  }
+
+  assignTask(spaceId: number, taskId: number): void {
+    const parsedId = this.pendingAssignees[taskId];
     if (!this.canManageTasks(spaceId) || !Number.isFinite(parsedId)) return;
     this.assigningTaskId = taskId;
     this.spacesService.assignTask(spaceId, taskId, parsedId)
       .pipe(finalize(() => { this.assigningTaskId = null; this.refreshView(); }))
       .subscribe({
-        next: task => { this.replaceTask(spaceId, task); this.feedback = 'Tarea asignada correctamente.'; },
+        next: task => { this.replaceTask(spaceId, task); delete this.pendingAssignees[taskId]; this.feedback = 'Tarea asignada correctamente.'; },
         error: error => this.error = this.messageFrom(error, 'No se pudo asignar la tarea.'),
       });
   }
