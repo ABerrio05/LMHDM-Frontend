@@ -58,4 +58,37 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(false);
     expect(service.isDeveloper()).toBe(false);
   });
+
+  it('recognizes a developer session from the login response', () => {
+    service.login({ email: 'nexoteam2026@gmail.com', password: 'ClaveSegura1' }).subscribe();
+
+    const request = http.expectOne(`${environment.apiUrl}/auth/login`);
+    request.flush({
+      userId: 4,
+      name: 'NEXO Team',
+      email: 'nexoteam2026@gmail.com',
+      role: 'DEVELOPER',
+      accessToken: 'jwt-developer',
+    });
+
+    expect(service.isDeveloper()).toBe(true);
+  });
+
+  it('reads the current user identifier from a valid JWT subject', () => {
+    const payload = btoa(JSON.stringify({ sub: '42' }));
+    localStorage.setItem('accessToken', `header.${payload}.signature`);
+
+    expect(service.currentUserId()).toBe(42);
+  });
+
+  it('returns null when the JWT subject is missing or invalid', () => {
+    expect(service.currentUserId()).toBeNull();
+
+    localStorage.setItem('accessToken', 'not-a-jwt');
+    expect(service.currentUserId()).toBeNull();
+
+    const payload = btoa(JSON.stringify({ sub: 'not-a-number' }));
+    localStorage.setItem('accessToken', `header.${payload}.signature`);
+    expect(service.currentUserId()).toBeNull();
+  });
 });

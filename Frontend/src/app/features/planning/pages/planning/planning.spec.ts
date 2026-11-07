@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, TimeoutError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HolidayCalendarService } from '../../../../infrastructure/calendar/holiday-calendar.service';
@@ -55,5 +55,52 @@ describe('PlanningComponent', () => {
     component.loadHolidays();
     expect(component.error).toBe('No fue posible consultar el calendario externo.');
     expect(component.loading).toBe(false);
+  });
+
+  it('builds the upcoming summary and available months without duplicates', () => {
+    component.holidays = [
+      { date: '2026-11-16', localName: 'Independencia de Cartagena', countryCode: 'CO' },
+      { date: '2026-12-08', localName: 'Inmaculada Concepción', countryCode: 'CO' },
+      { date: '2026-12-25', localName: 'Navidad', countryCode: 'CO' },
+      { date: '2027-01-01', localName: 'Año Nuevo', countryCode: 'CO' },
+      { date: '2027-01-11', localName: 'Reyes Magos', countryCode: 'CO' },
+    ];
+
+    expect(component.upcomingHolidays).toHaveLength(4);
+    expect(component.availableMonths).toEqual(['2026-11', '2026-12', '2027-01']);
+  });
+
+  it('selects a month and builds its calendar with holiday information', () => {
+    component.holidays = [
+      { date: '2026-11-16', localName: 'Independencia de Cartagena', countryCode: 'CO' },
+    ];
+
+    component.selectMonth('2026-11');
+
+    expect(component.selectedMonth).toBe('2026-11');
+    expect(component.selectedMonthLabel.toLowerCase()).toContain('noviembre');
+    expect(component.selectedMonthLabel).toContain('2026');
+    expect(component.calendarDays.slice(0, 6).every((day) => day.label === '')).toBe(true);
+    expect(component.calendarDays[6].label).toBe('1');
+    expect(component.calendarDays.find((day) => day.label === '16')?.holiday?.localName)
+      .toBe('Independencia de Cartagena');
+  });
+
+  it('shows specific messages for timeouts and expired sessions', () => {
+    calendar.listUpcomingColombianHolidays.mockReturnValue(throwError(() => new TimeoutError()));
+    component.loadHolidays();
+    expect(component.error).toContain('tardó demasiado');
+
+    calendar.listUpcomingColombianHolidays.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 401 })),
+    );
+    component.loadHolidays();
+    expect(component.error).toContain('sesión');
+
+    calendar.listUpcomingColombianHolidays.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 403 })),
+    );
+    component.loadHolidays();
+    expect(component.error).toContain('sesión');
   });
 });
